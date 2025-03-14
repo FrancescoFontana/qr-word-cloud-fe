@@ -2,7 +2,6 @@ services:
   - type: web
     name: qr-word-cloud-fe
     env: node
-    plan: free
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
@@ -10,10 +9,4 @@ services:
         value: wss://qr-word-cloud-be.onrender.com/ws
       - key: NEXT_PUBLIC_API_URL
         value: https://qr-word-cloud-be.onrender.com
-      - key: NODE_ENV
-        value: production
-    autoDeploy: true
-    # Free tier has limited memory, so we need to specify the minimum requirements
-    scaling:
-      minInstances: 1
-      maxInstances: 1 
+    plan: free 
