@@ -2,6 +2,7 @@ services:
   - type: web
     name: qr-word-cloud-fe
     env: node
+    nodeVersion: 20.11.1
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
