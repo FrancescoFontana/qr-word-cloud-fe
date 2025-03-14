@@ -127,7 +127,7 @@ class WebSocketService {
   sendWord(word: string) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ 
-        type: 'send_word', 
+        type: 'submitWord', 
         word 
       }));
     }
