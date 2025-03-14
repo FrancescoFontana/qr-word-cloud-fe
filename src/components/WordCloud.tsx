@@ -1,36 +1,45 @@
-import React from 'react';
-import WordCloud from 'react-d3-cloud';
-import { useWordCloudStore } from '@/store/wordCloudStore';
+import { useMemo } from 'react';
+import Cloud from 'react-d3-cloud';
 
-interface WordCloudProps {
-  className?: string;
+interface Word {
+  text: string;
+  value: number;
 }
 
-export const WordCloudComponent: React.FC<WordCloudProps> = ({ className = '' }) => {
-  const { words, isBlurred } = useWordCloudStore();
+interface WordCloudProps {
+  words: Word[];
+}
 
-  const options = {
-    font: 'Inter',
-    fontSizes: [20, 60],
-    padding: 5,
-    rotate: 0,
-    colors: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'],
-  };
+export default function WordCloud({ words = [] }: WordCloudProps) {
+  const cloudWords = useMemo(() => {
+    if (!words?.length) return [];
+    
+    // Scale the values for better visualization
+    return words.map(word => ({
+      ...word,
+      value: Math.max(word.value, 1) * 20,
+    }));
+  }, [words]);
+
+  if (!words?.length) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
+        <p className="text-gray-500">No words yet</p>
+      </div>
+    );
+  }
 
   return (
-    <div className={`w-full h-full ${className}`}>
-      <div className={`transition-all duration-500 ${isBlurred ? 'blur-sm' : ''}`}>
-        <WordCloud
-          data={words}
-          width={800}
-          height={600}
-          font="Inter"
-          fontSize={(word) => Math.log2(word.value) * 5}
-          rotate={0}
-          padding={5}
-          random={() => 0.5}
-        />
-      </div>
+    <div className="h-64 w-full">
+      <Cloud
+        data={cloudWords}
+        width={800}
+        height={600}
+        font="Inter"
+        fontSize={(word: Word) => Math.max(word.value, 12)}
+        rotate={0}
+        padding={2}
+      />
     </div>
   );
-}; 
+} 

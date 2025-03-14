@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'QR Word Cloud',
-  description: 'Interactive word cloud for artwork interpretation',
+  title: 'QR Word Cloud Generator',
+  description: 'Generate QR codes with word cloud visualization',
 };
 
 export default function RootLayout({
@@ -16,7 +16,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <main className="min-h-screen bg-gray-100">
+          {children}
+        </main>
+      </body>
     </html>
   );
 } 
