@@ -1,5 +1,7 @@
+'use client';
+
 import { useMemo } from 'react';
-import Cloud from 'react-d3-cloud';
+import dynamic from 'next/dynamic';
 
 interface Word {
   text: string;
@@ -9,6 +11,11 @@ interface Word {
 interface WordCloudProps {
   words: Word[];
 }
+
+// Dynamically import the Cloud component with no SSR
+const Cloud = dynamic(() => import('react-d3-cloud'), {
+  ssr: false,
+});
 
 export default function WordCloud({ words = [] }: WordCloudProps) {
   const cloudWords = useMemo(() => {

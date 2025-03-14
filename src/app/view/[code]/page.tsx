@@ -2,8 +2,17 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import WordCloud from '@/components/WordCloud';
+import dynamic from 'next/dynamic';
 import { useWordCloudStore, wsService } from '@/services/websocket';
+
+const WordCloud = dynamic(() => import('@/components/WordCloud'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
+      <p className="text-gray-500">Loading word cloud...</p>
+    </div>
+  ),
+});
 
 export default function ViewPage() {
   const params = useParams();
