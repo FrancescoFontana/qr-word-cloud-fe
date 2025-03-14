@@ -3,20 +3,25 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import WordCloud from '@/components/WordCloud';
+import { useWordCloudStore, wsService } from '@/services/websocket';
 
 export default function SubmitPage() {
   const params = useParams();
   const code = params.code as string;
   const [input, setInput] = useState('');
-  const [words, setWords] = useState<Array<{ text: string; value: number }>>([]);
+  const { words, blurred } = useWordCloudStore();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    // Add the new word to the list
-    const newWord = { text: input.trim(), value: 1 };
-    setWords(prev => [...prev, newWord]);
+    // Send the new word to the server
+    wsService.sendMessage({
+      type: 'add_word',
+      code,
+      word: input.trim(),
+    });
+
     setInput('');
   };
 
@@ -28,7 +33,9 @@ export default function SubmitPage() {
         
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Word Cloud</h2>
-          <WordCloud words={words} />
+          <div className={`transition-all duration-1000 ${blurred ? 'blur-sm' : ''}`}>
+            <WordCloud words={words} />
+          </div>
         </div>
         
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">

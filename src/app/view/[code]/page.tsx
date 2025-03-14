@@ -1,41 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import WordCloud from '@/components/WordCloud';
-
-interface Word {
-  text: string;
-  value: number;
-}
+import { useWordCloudStore, wsService } from '@/services/websocket';
 
 export default function ViewPage() {
   const params = useParams();
   const code = params.code as string;
-  const [words, setWords] = useState<Word[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const { words, blurred } = useWordCloudStore();
 
   useEffect(() => {
-    const ws = new WebSocket(process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws');
-    
-    ws.onopen = () => {
-      setIsConnected(true);
-      ws.send(JSON.stringify({ type: 'join', code }));
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'words') {
-        setWords(data.words);
-      }
-    };
-
-    ws.onclose = () => {
-      setIsConnected(false);
-    };
-
+    wsService.connect(code);
     return () => {
-      ws.close();
+      wsService.disconnect();
     };
   }, [code]);
 
@@ -47,13 +25,9 @@ export default function ViewPage() {
         
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Word Cloud</h2>
-          {!isConnected ? (
-            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Connecting...</p>
-            </div>
-          ) : (
+          <div className={`transition-all duration-1000 ${blurred ? 'blur-sm' : ''}`}>
             <WordCloud words={words} />
-          )}
+          </div>
         </div>
       </div>
     </main>
