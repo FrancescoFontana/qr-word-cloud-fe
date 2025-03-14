@@ -8,15 +8,19 @@ interface Word {
 interface WordCloudState {
   words: Word[];
   blurred: boolean;
+  error: string | null;
   setWords: (words: Word[]) => void;
   setBlurred: (blurred: boolean) => void;
+  setError: (error: string | null) => void;
 }
 
 export const useWordCloudStore = create<WordCloudState>((set) => ({
   words: [],
   blurred: true,
+  error: null,
   setWords: (words) => set({ words }),
   setBlurred: (blurred) => set({ blurred }),
+  setError: (error) => set({ error }),
 }));
 
 class WebSocketService {
@@ -43,17 +47,52 @@ class WebSocketService {
     this.ws.onopen = () => {
       console.log('WebSocket connected');
       this.reconnectAttempts = 0;
-      this.ws?.send(JSON.stringify({ type: 'join', code }));
+      this.ws?.send(JSON.stringify({ 
+        type: 'join_artwork', 
+        artworkCode: code 
+      }));
     };
 
     this.ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.type === 'update_cloud') {
-        useWordCloudStore.getState().setWords(data.words);
-        useWordCloudStore.getState().setBlurred(false);
-        setTimeout(() => {
-          useWordCloudStore.getState().setBlurred(true);
-        }, 1000);
+      
+      switch (data.type) {
+        case 'update_cloud':
+          if (data.words) {
+            // Handle initial words array
+            useWordCloudStore.getState().setWords(
+              data.words.map((word: string) => ({ text: word, value: 1 }))
+            );
+          } else if (data.newWord) {
+            // Handle new word
+            const currentWords = useWordCloudStore.getState().words;
+            const existingWord = currentWords.find(w => w.text === data.newWord);
+            
+            if (existingWord) {
+              useWordCloudStore.getState().setWords(
+                currentWords.map(w => 
+                  w.text === data.newWord 
+                    ? { ...w, value: w.value + 1 }
+                    : w
+                )
+              );
+            } else {
+              useWordCloudStore.getState().setWords([
+                ...currentWords,
+                { text: data.newWord, value: 1 }
+              ]);
+            }
+          }
+          
+          useWordCloudStore.getState().setBlurred(false);
+          setTimeout(() => {
+            useWordCloudStore.getState().setBlurred(true);
+          }, 1000);
+          break;
+
+        case 'error':
+          useWordCloudStore.getState().setError(data.message);
+          break;
       }
     };
 
@@ -85,11 +124,14 @@ class WebSocketService {
     }
   }
 
-  sendMessage(message: any) {
+  sendWord(word: string) {
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
+      this.ws.send(JSON.stringify({ 
+        type: 'send_word', 
+        word 
+      }));
     }
   }
 }
 
-export const wsService = new WebSocketService(process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws'); 
+export const wsService = new WebSocketService(process.env.NEXT_PUBLIC_WS_URL || 'wss://qr-word-cloud-be.onrender.com/ws'); 

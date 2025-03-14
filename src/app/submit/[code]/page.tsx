@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useWordCloudStore, wsService } from '@/services/websocket';
@@ -18,20 +18,26 @@ export default function SubmitPage() {
   const params = useParams();
   const code = params.code as string;
   const [input, setInput] = useState('');
-  const { words, blurred } = useWordCloudStore();
+  const { words, blurred, error } = useWordCloudStore();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    wsService.connect(code);
+    return () => {
+      wsService.disconnect();
+    };
+  }, [code]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    // Send the new word to the server
-    wsService.sendMessage({
-      type: 'add_word',
-      code,
-      word: input.trim(),
-    });
-
-    setInput('');
+    try {
+      // Send the new word to the server
+      wsService.sendWord(input.trim());
+      setInput('');
+    } catch (err) {
+      console.error('Failed to send word:', err);
+    }
   };
 
   return (
@@ -39,6 +45,12 @@ export default function SubmitPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         <h1 className="text-3xl font-bold text-center">Submit Words</h1>
         <p className="text-center text-gray-600">Code: {code}</p>
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
         
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Word Cloud</h2>
