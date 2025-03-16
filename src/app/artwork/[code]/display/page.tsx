@@ -7,8 +7,8 @@ import dynamic from 'next/dynamic';
 const WordCloud = dynamic(() => import('@/components/WordCloud'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-      <p className="text-gray-500">Loading word cloud...</p>
+    <div className="flex items-center justify-center h-screen w-screen bg-gray-50">
+      <p className="text-gray-500 text-xl">Loading word cloud...</p>
     </div>
   ),
 });
@@ -28,29 +28,24 @@ export default function DisplayPage({ params }: PageProps) {
   }, [params.code]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Word Cloud Container */}
-        <div className={`relative mb-8 transition-all duration-500 ${blurred ? 'blur-sm' : ''}`}>
-          <div className="bg-white rounded-lg shadow-lg p-4">
-            <WordCloud words={words} />
-          </div>
-        </div>
+    <div className="relative min-h-screen w-screen bg-gradient-to-br from-gray-900 to-gray-800">
+      {/* Word Cloud Container */}
+      <div className={`absolute inset-0 transition-all duration-1000 ${blurred ? 'blur-lg opacity-50' : 'blur-none opacity-100'}`}>
+        <WordCloud words={words} />
+      </div>
 
-        {/* Display Info */}
-        <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            Artwork Display: {params.code}
-          </h1>
-          
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-lg">
-              {error}
-            </div>
-          )}
-          
-          <p className="text-gray-600">
-            This word cloud updates in real-time as participants contribute new words
+      {/* Error Display */}
+      {error && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-200 text-red-700 px-6 py-3 rounded-lg shadow-lg">
+          {error}
+        </div>
+      )}
+
+      {/* Info Overlay - Only visible when blurred */}
+      <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 transition-all duration-500 ${blurred ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg p-4 text-white text-center">
+          <p className="text-sm">
+            Waiting for new words...
           </p>
         </div>
       </div>

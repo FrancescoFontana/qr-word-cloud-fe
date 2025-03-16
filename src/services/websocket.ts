@@ -28,6 +28,7 @@ class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectTimeout = 1000;
+  private wordMap: Map<string, number> = new Map();
 
   constructor(private url: string) {}
 
@@ -40,6 +41,14 @@ class WebSocketService {
     this.ws = new WebSocket(this.url);
     this.setupEventListeners(code);
     this.reconnectAttempts = 0;
+  }
+
+  private updateWordCloud() {
+    const words = Array.from(this.wordMap.entries()).map(([text, value]) => ({
+      text: text.toLowerCase(), // Normalize to lowercase
+      value
+    }));
+    useWordCloudStore.getState().setWords(words);
   }
 
   private setupEventListeners(code: string) {
@@ -64,28 +73,17 @@ class WebSocketService {
         case 'update_cloud':
           if (data.words) {
             // Handle initial words array
-            useWordCloudStore.getState().setWords(
-              data.words.map((word: string) => ({ text: word, value: 1 }))
-            );
+            this.wordMap.clear();
+            data.words.forEach((word: string) => {
+              const normalizedWord = word.toLowerCase();
+              this.wordMap.set(normalizedWord, (this.wordMap.get(normalizedWord) || 0) + 1);
+            });
+            this.updateWordCloud();
           } else if (data.newWord) {
             // Handle new word
-            const currentWords = useWordCloudStore.getState().words;
-            const existingWord = currentWords.find(w => w.text === data.newWord);
-            
-            if (existingWord) {
-              useWordCloudStore.getState().setWords(
-                currentWords.map(w => 
-                  w.text === data.newWord 
-                    ? { ...w, value: w.value + 1 }
-                    : w
-                )
-              );
-            } else {
-              useWordCloudStore.getState().setWords([
-                ...currentWords,
-                { text: data.newWord, value: 1 }
-              ]);
-            }
+            const normalizedWord = data.newWord.toLowerCase();
+            this.wordMap.set(normalizedWord, (this.wordMap.get(normalizedWord) || 0) + 1);
+            this.updateWordCloud();
           }
           
           useWordCloudStore.getState().setBlurred(false);
@@ -125,6 +123,7 @@ class WebSocketService {
     if (this.ws) {
       this.ws.close();
       this.ws = null;
+      this.wordMap.clear();
     }
   }
 
@@ -132,7 +131,7 @@ class WebSocketService {
     if (this.ws?.readyState === WebSocket.OPEN) {
       const message = { 
         type: 'send_word', 
-        word 
+        word: word.toLowerCase() // Normalize to lowercase before sending
       };
       console.log('📤 [WebSocket v3] Sending word message:', message);
       this.ws.send(JSON.stringify(message));

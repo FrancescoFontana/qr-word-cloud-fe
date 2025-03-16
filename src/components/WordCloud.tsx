@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 interface Word {
@@ -18,34 +18,55 @@ const Cloud = dynamic(() => import('react-d3-cloud'), {
 });
 
 export default function WordCloud({ words = [] }: WordCloudProps) {
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
   const cloudWords = useMemo(() => {
     if (!words?.length) return [];
+    
+    // Find the maximum value for scaling
+    const maxValue = Math.max(...words.map(w => w.value));
+    const minValue = Math.min(...words.map(w => w.value));
     
     // Scale the values for better visualization
     return words.map(word => ({
       ...word,
-      value: Math.max(word.value, 1) * 20,
+      // Scale between 20 and 100 based on frequency
+      value: 20 + ((word.value - minValue) / (maxValue - minValue || 1)) * 80
     }));
   }, [words]);
 
   if (!words?.length) {
     return (
-      <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-        <p className="text-gray-500">No words yet</p>
+      <div className="flex items-center justify-center h-screen w-screen bg-gray-50">
+        <p className="text-gray-500 text-xl">No words yet</p>
       </div>
     );
   }
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-screen w-screen overflow-hidden">
       <Cloud
         data={cloudWords}
-        width={800}
-        height={600}
+        width={dimensions.width}
+        height={dimensions.height}
         font="Inter"
-        fontSize={(word: Word) => Math.max(word.value, 12)}
+        fontSize={(word: Word) => word.value}
         rotate={0}
-        padding={2}
+        padding={3}
+        random={() => 0.5}
       />
     </div>
   );
