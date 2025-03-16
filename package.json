@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && cp server.js .next/standalone/",
-    "start": "node server.js",
+    "dev:custom": "set NODE_ENV=development&& node server.js",
+    "build": "next build",
+    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
