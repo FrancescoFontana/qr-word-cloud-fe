@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useWordCloudStore, wsService } from '@/services/websocket';
 import dynamic from 'next/dynamic';
 
@@ -19,14 +19,14 @@ interface PageProps {
   };
 }
 
-export default function ArtworkPage({ params }: PageProps) {
+function ArtworkContent({ code }: { code: string }) {
   const { words, blurred, error } = useWordCloudStore();
   const [inputValue, setInputValue] = useState('');
 
   useEffect(() => {
-    wsService.connect(params.code);
+    wsService.connect(code);
     return () => wsService.disconnect();
-  }, [params.code]);
+  }, [code]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +45,7 @@ export default function ArtworkPage({ params }: PageProps) {
       <div className="max-w-4xl mx-auto">
         {/* Word Cloud Container */}
         <div className={`relative mb-8 transition-all duration-500 ${blurred ? 'blur-sm' : ''}`}>
-          <div className="bg-white rounded-lg shadow-lg p-4">
+          <div className="bg-white rounded-lg shadow-lg p-4 min-h-[400px]">
             <WordCloud words={words} />
           </div>
         </div>
@@ -53,7 +53,7 @@ export default function ArtworkPage({ params }: PageProps) {
         {/* Input Form */}
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-2xl font-bold text-center mb-6">
-            Contribute to Artwork: {params.code}
+            Contribute to Artwork: {code}
           </h1>
           
           {error && (
@@ -85,5 +85,21 @@ export default function ArtworkPage({ params }: PageProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ArtworkPage({ params }: PageProps) {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-4 min-h-[400px] flex items-center justify-center">
+            <p className="text-gray-500">Loading artwork...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <ArtworkContent code={params.code} />
+    </Suspense>
   );
 } 
