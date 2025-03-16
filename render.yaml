@@ -4,7 +4,7 @@ services:
     env: node
     nodeVersion: 20.11.1
     buildCommand: rm -rf node_modules .next && npm ci && npm run build
-    startCommand: npm start
+    startCommand: node .next/standalone/server.js
     envVars:
       - key: NEXT_PUBLIC_WS_URL
         value: wss://qr-word-cloud-be.onrender.com/ws
