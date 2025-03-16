@@ -36,6 +36,7 @@ class WebSocketService {
       return;
     }
 
+    console.log('Connecting WebSocket Service v2 - API Spec Compliant');
     this.ws = new WebSocket(this.url);
     this.setupEventListeners(code);
     this.reconnectAttempts = 0;
@@ -45,7 +46,7 @@ class WebSocketService {
     if (!this.ws) return;
 
     this.ws.onopen = () => {
-      console.log('WebSocket connected');
+      console.log('WebSocket connected, sending join_artwork message');
       this.reconnectAttempts = 0;
       this.ws?.send(JSON.stringify({ 
         type: 'join_artwork', 
@@ -126,7 +127,7 @@ class WebSocketService {
 
   sendWord(word: string) {
     if (this.ws?.readyState === WebSocket.OPEN) {
-      // Send word message according to API specifications
+      console.log('Sending word with type: send_word');
       this.ws.send(JSON.stringify({ 
         type: 'send_word', 
         word 
