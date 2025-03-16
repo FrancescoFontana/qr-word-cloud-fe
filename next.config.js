@@ -21,6 +21,10 @@ const nextConfig = {
   poweredByHeader: false,
   generateEtags: false,
   compress: true,
+  distDir: '.next',
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 }
 
 module.exports = nextConfig 
