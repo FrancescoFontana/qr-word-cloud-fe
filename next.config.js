@@ -2,9 +2,6 @@
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
-  experimental: {
-    serverActions: true,
-  },
   async headers() {
     return [
       {
@@ -25,8 +22,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Let Next.js know it's running behind a proxy
-  assetPrefix: process.env.NODE_ENV === 'production' ? '.' : '',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/' : '',
 }
 
 module.exports = nextConfig 
