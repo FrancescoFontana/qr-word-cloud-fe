@@ -1,8 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useWordCloudStore } from '@/store/wordCloudStore';
-import WordCloud from '@/components/WordCloud';
+import { useWordCloudStore, wsService } from '@/services/websocket';
+import dynamic from 'next/dynamic';
+
+const WordCloud = dynamic(() => import('@/components/WordCloud'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
+      <p className="text-gray-500">Loading word cloud...</p>
+    </div>
+  ),
+});
 
 interface PageProps {
   params: {
@@ -11,18 +20,18 @@ interface PageProps {
 }
 
 export default function ArtworkPage({ params }: PageProps) {
-  const { connect, disconnect, words, isBlurred, submitWord } = useWordCloudStore();
+  const { words, blurred, error } = useWordCloudStore();
   const [inputValue, setInputValue] = useState('');
 
   useEffect(() => {
-    connect(params.code);
-    return () => disconnect();
-  }, [params.code, connect, disconnect]);
+    wsService.connect(params.code);
+    return () => wsService.disconnect();
+  }, [params.code]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
-      submitWord(inputValue.trim());
+      wsService.sendWord(inputValue.trim());
       setInputValue('');
     }
   };
@@ -30,7 +39,7 @@ export default function ArtworkPage({ params }: PageProps) {
   return (
     <div className="min-h-screen relative">
       {/* Background Word Cloud */}
-      <div className={`absolute inset-0 transition-all duration-500 ${isBlurred ? 'blur-sm' : ''}`}>
+      <div className={`absolute inset-0 transition-all duration-500 ${blurred ? 'blur-sm' : ''}`}>
         <WordCloud words={words} />
       </div>
 
@@ -41,6 +50,12 @@ export default function ArtworkPage({ params }: PageProps) {
             Artwork: {params.code}
           </h1>
           
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-lg">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
               <input
