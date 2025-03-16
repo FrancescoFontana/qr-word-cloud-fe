@@ -8,15 +8,19 @@ interface Word {
 interface WordCloudState {
   words: Word[];
   error: string | null;
+  isBlurred: boolean;
   setWords: (words: Word[]) => void;
   setError: (error: string | null) => void;
+  setBlurred: (isBlurred: boolean) => void;
 }
 
 export const useWordCloudStore = create<WordCloudState>((set) => ({
   words: [],
   error: null,
+  isBlurred: true,
   setWords: (words) => set({ words }),
   setError: (error) => set({ error }),
+  setBlurred: (isBlurred) => set({ isBlurred }),
 }));
 
 class WebSocketService {

@@ -20,7 +20,7 @@ interface PageProps {
 }
 
 export default function ArtworkPage({ params }: PageProps) {
-  const { words, error } = useWordCloudStore();
+  const { words, error, isBlurred, setBlurred } = useWordCloudStore();
   const [inputValue, setInputValue] = useState('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
@@ -36,6 +36,7 @@ export default function ArtworkPage({ params }: PageProps) {
         await wsService.sendWord(inputValue.trim());
         setInputValue('');
         setHasSubmitted(true);
+        setBlurred(false); // Make the word cloud nitid after submission
       } catch (err) {
         console.error('Failed to send word:', err);
       }
@@ -45,7 +46,7 @@ export default function ArtworkPage({ params }: PageProps) {
   return (
     <div className="relative min-h-screen w-screen bg-gradient-to-br from-gray-900 to-gray-800">
       {/* Word Cloud Container */}
-      <div className="absolute inset-0">
+      <div className={`absolute inset-0 transition-all duration-1000 ${isBlurred ? 'blur-lg opacity-50' : ''}`}>
         <WordCloud words={words} />
       </div>
 
