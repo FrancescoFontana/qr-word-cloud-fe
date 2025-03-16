@@ -3,7 +3,12 @@ services:
     name: qr-word-cloud-fe
     env: node
     nodeVersion: 20.11.1
-    buildCommand: rm -rf node_modules .next && npm ci && npm run build
+    buildCommand: |
+      rm -rf node_modules .next && 
+      npm ci && 
+      npm run build && 
+      cp -r .next/static .next/standalone/.next/ && 
+      cp -r public .next/standalone/
     startCommand: node .next/standalone/server.js
     envVars:
       - key: NEXT_PUBLIC_WS_URL
