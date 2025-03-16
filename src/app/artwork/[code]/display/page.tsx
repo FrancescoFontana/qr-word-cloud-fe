@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useWordCloudStore, wsService } from '@/services/websocket';
 import dynamic from 'next/dynamic';
 
 const WordCloud = dynamic(() => import('@/components/WordCloud'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-screen w-screen bg-gray-50">
-      <p className="text-gray-500 text-xl">Loading word cloud...</p>
+    <div className="flex items-center justify-center h-screen w-screen bg-gradient-to-br from-gray-900 to-gray-800">
+      <p className="text-white/50 text-xl">Loading word cloud...</p>
     </div>
   ),
 });
@@ -20,12 +20,42 @@ interface PageProps {
 }
 
 export default function DisplayPage({ params }: PageProps) {
-  const { words, error, isBlurred } = useWordCloudStore();
+  const { words, error, isBlurred, setBlurred } = useWordCloudStore();
+  const wordsRef = useRef(words);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     wsService.connect(params.code);
     return () => wsService.disconnect();
   }, [params.code]);
+
+  useEffect(() => {
+    // Check if words have changed
+    if (words.length !== wordsRef.current.length) {
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Make word cloud nitid
+      setBlurred(false);
+
+      // Set timeout to blur after 3 seconds
+      timeoutRef.current = setTimeout(() => {
+        setBlurred(true);
+      }, 3000);
+
+      // Update ref
+      wordsRef.current = words;
+    }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [words, setBlurred]);
 
   return (
     <div className="relative min-h-screen w-screen bg-gradient-to-br from-gray-900 to-gray-800">
@@ -46,7 +76,7 @@ export default function DisplayPage({ params }: PageProps) {
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-500">
           <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg p-4 text-white text-center">
             <p className="text-sm">
-              Waiting for words to be added...
+              Waiting for new words...
             </p>
           </div>
         </div>
