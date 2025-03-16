@@ -10,8 +10,6 @@ services:
         value: wss://qr-word-cloud-be.onrender.com/ws
       - key: NEXT_PUBLIC_API_URL
         value: https://qr-word-cloud-be.onrender.com
-      - key: PORT
-        value: "3000"
       - key: NODE_ENV
         value: production
       - key: HOSTNAME

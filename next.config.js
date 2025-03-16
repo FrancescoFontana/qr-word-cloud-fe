@@ -25,6 +25,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Let Next.js know it's running behind a proxy
+  assetPrefix: process.env.NODE_ENV === 'production' ? '.' : '',
 }
 
 module.exports = nextConfig 
