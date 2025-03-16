@@ -20,9 +20,9 @@ interface PageProps {
 }
 
 export default function ArtworkPage({ params }: PageProps) {
-  const { words, blurred, error } = useWordCloudStore();
+  const { words, error } = useWordCloudStore();
   const [inputValue, setInputValue] = useState('');
-  const [showInput, setShowInput] = useState(true);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   useEffect(() => {
     wsService.connect(params.code);
@@ -35,9 +35,7 @@ export default function ArtworkPage({ params }: PageProps) {
       try {
         await wsService.sendWord(inputValue.trim());
         setInputValue('');
-        setShowInput(false);
-        // Show input again after the blur effect
-        setTimeout(() => setShowInput(true), 2000);
+        setHasSubmitted(true);
       } catch (err) {
         console.error('Failed to send word:', err);
       }
@@ -47,7 +45,7 @@ export default function ArtworkPage({ params }: PageProps) {
   return (
     <div className="relative min-h-screen w-screen bg-gradient-to-br from-gray-900 to-gray-800">
       {/* Word Cloud Container */}
-      <div className={`absolute inset-0 transition-all duration-1000 ${blurred ? 'blur-lg opacity-50' : 'blur-none opacity-100'}`}>
+      <div className="absolute inset-0">
         <WordCloud words={words} />
       </div>
 
@@ -58,33 +56,38 @@ export default function ArtworkPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Input Form - Only visible when showInput is true */}
-      <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-500 ${showInput ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Enter a word..."
-            className="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 rounded-lg bg-white/20 backdrop-blur-md text-white hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 transition-colors"
-          >
-            Add
-          </button>
-        </form>
-      </div>
-
-      {/* Info Overlay - Only visible when blurred */}
-      <div className={`absolute bottom-24 left-1/2 transform -translate-x-1/2 transition-all duration-500 ${blurred ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg p-4 text-white text-center">
-          <p className="text-sm">
-            Word added successfully!
-          </p>
+      {/* Input Form - Only visible before first submission */}
+      {!hasSubmitted && (
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-500">
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Enter a word..."
+              className="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-lg bg-white/20 backdrop-blur-md text-white hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 transition-colors"
+            >
+              Add
+            </button>
+          </form>
         </div>
-      </div>
+      )}
+
+      {/* Success Message - Shown briefly after submission */}
+      {hasSubmitted && (
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-500 opacity-0 animate-fade-out">
+          <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg p-4 text-white text-center">
+            <p className="text-sm">
+              Word added successfully!
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

@@ -7,19 +7,15 @@ interface Word {
 
 interface WordCloudState {
   words: Word[];
-  blurred: boolean;
   error: string | null;
   setWords: (words: Word[]) => void;
-  setBlurred: (blurred: boolean) => void;
   setError: (error: string | null) => void;
 }
 
 export const useWordCloudStore = create<WordCloudState>((set) => ({
   words: [],
-  blurred: true,
   error: null,
   setWords: (words) => set({ words }),
-  setBlurred: (blurred) => set({ blurred }),
   setError: (error) => set({ error }),
 }));
 
@@ -85,11 +81,6 @@ class WebSocketService {
             this.wordMap.set(normalizedWord, (this.wordMap.get(normalizedWord) || 0) + 1);
             this.updateWordCloud();
           }
-          
-          useWordCloudStore.getState().setBlurred(false);
-          setTimeout(() => {
-            useWordCloudStore.getState().setBlurred(true);
-          }, 1000);
           break;
 
         case 'error':

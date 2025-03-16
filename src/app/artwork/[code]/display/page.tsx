@@ -20,7 +20,7 @@ interface PageProps {
 }
 
 export default function DisplayPage({ params }: PageProps) {
-  const { words, blurred, error } = useWordCloudStore();
+  const { words, error } = useWordCloudStore();
 
   useEffect(() => {
     wsService.connect(params.code);
@@ -30,7 +30,7 @@ export default function DisplayPage({ params }: PageProps) {
   return (
     <div className="relative min-h-screen w-screen bg-gradient-to-br from-gray-900 to-gray-800">
       {/* Word Cloud Container */}
-      <div className={`absolute inset-0 transition-all duration-1000 ${blurred ? 'blur-lg opacity-50' : 'blur-none opacity-100'}`}>
+      <div className="absolute inset-0">
         <WordCloud words={words} />
       </div>
 
@@ -40,15 +40,6 @@ export default function DisplayPage({ params }: PageProps) {
           {error}
         </div>
       )}
-
-      {/* Info Overlay - Only visible when blurred */}
-      <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 transition-all duration-500 ${blurred ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg p-4 text-white text-center">
-          <p className="text-sm">
-            Waiting for new words...
-          </p>
-        </div>
-      </div>
     </div>
   );
 } 

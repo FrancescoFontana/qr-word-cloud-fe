@@ -4,7 +4,8 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-rgb: 243, 244, 246;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
 }
 
 body {
@@ -14,6 +15,20 @@ body {
 }
 
 .blur-sm {
-  filter: blur(8px);
-  transition: filter 0.5s ease-in-out;
+  backdrop-filter: blur(4px);
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+}
+
+.animate-fade-out {
+  animation: fadeOut 1s ease-out forwards;
 } 
