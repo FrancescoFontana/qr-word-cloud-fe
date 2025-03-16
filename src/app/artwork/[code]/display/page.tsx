@@ -28,23 +28,29 @@ export default function DisplayPage({ params }: PageProps) {
   }, [params.code]);
 
   return (
-    <div className="min-h-screen relative">
-      <div className={`absolute inset-0 transition-all duration-500 ${blurred ? 'blur-sm' : ''}`}>
-        <WordCloud words={words} />
-      </div>
-      
-      <div className="relative z-10 flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-4">
-            Artwork: {params.code}
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Word Cloud Container */}
+        <div className={`relative mb-8 transition-all duration-500 ${blurred ? 'blur-sm' : ''}`}>
+          <div className="bg-white rounded-lg shadow-lg p-4">
+            <WordCloud words={words} />
+          </div>
+        </div>
+
+        {/* Display Info */}
+        <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">
+            Artwork Display: {params.code}
           </h1>
+          
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-lg">
               {error}
             </div>
           )}
-          <p className="text-white/80">
-            Word cloud updates in real-time as new words are submitted
+          
+          <p className="text-gray-600">
+            This word cloud updates in real-time as participants contribute new words
           </p>
         </div>
       </div>

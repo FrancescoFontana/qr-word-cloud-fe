@@ -28,26 +28,32 @@ export default function ArtworkPage({ params }: PageProps) {
     return () => wsService.disconnect();
   }, [params.code]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
-      wsService.sendWord(inputValue.trim());
-      setInputValue('');
+      try {
+        await wsService.sendWord(inputValue.trim());
+        setInputValue('');
+      } catch (err) {
+        console.error('Failed to send word:', err);
+      }
     }
   };
 
   return (
-    <div className="min-h-screen relative">
-      {/* Background Word Cloud */}
-      <div className={`absolute inset-0 transition-all duration-500 ${blurred ? 'blur-sm' : ''}`}>
-        <WordCloud words={words} />
-      </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Word Cloud Container */}
+        <div className={`relative mb-8 transition-all duration-500 ${blurred ? 'blur-sm' : ''}`}>
+          <div className="bg-white rounded-lg shadow-lg p-4">
+            <WordCloud words={words} />
+          </div>
+        </div>
 
-      {/* Content */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen">
-        <div className="w-full max-w-md p-8 bg-white/90 backdrop-blur-sm rounded-lg shadow-xl">
+        {/* Input Form */}
+        <div className="bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-2xl font-bold text-center mb-6">
-            Artwork: {params.code}
+            Contribute to Artwork: {params.code}
           </h1>
           
           {error && (
@@ -63,17 +69,17 @@ export default function ArtworkPage({ params }: PageProps) {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Enter the first word that came to your mind..."
+                placeholder="Enter a word to add to the cloud..."
+                maxLength={50}
                 autoFocus
               />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <button
-                  type="submit"
-                  className="text-blue-500 hover:text-blue-600 transition-colors"
-                >
-                  Submit
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                disabled={!inputValue.trim()}
+              >
+                Add Word
+              </button>
             </div>
           </form>
         </div>
