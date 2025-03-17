@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useWordCloudStore, wsService } from '@/services/websocket';
+import { QRCodeSVG } from 'qrcode.react';
 
 const WordCloud = dynamic(() => import('@/components/WordCloud'), {
   ssr: false,
@@ -19,6 +20,11 @@ export default function ViewPage() {
   const code = params.code as string;
   const { words, isBlurred } = useWordCloudStore();
 
+  // Construct the artwork page URL
+  const artworkUrl = typeof window !== 'undefined' 
+    ? `${window.location.origin}/artwork/${code}`
+    : `https://qr-word-cloud-fe.onrender.com/artwork/${code}`;
+
   useEffect(() => {
     wsService.connect(code, true);
     return () => {
@@ -32,15 +38,20 @@ export default function ViewPage() {
         <WordCloud words={words} />
       </div>
 
-      {isBlurred && (
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-500">
-          <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg p-4 text-white text-center">
-            <p className="text-sm">
-              Waiting for new words...
-            </p>
-          </div>
+      <div className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 ${isBlurred ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg p-8 text-white text-center">
+          <QRCodeSVG
+            value={artworkUrl}
+            size={200}
+            level="H"
+            includeMargin={true}
+            className="mx-auto mb-4"
+          />
+          <p className="text-sm">
+            Scan to add words to the cloud
+          </p>
         </div>
-      )}
+      </div>
     </div>
   );
 } 
