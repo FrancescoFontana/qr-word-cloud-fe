@@ -15,6 +15,7 @@ declare module 'react-d3-cloud' {
     rotate?: number;
     padding?: number;
     random?: () => number;
+    fill?: (word: Word) => string;
   }
 
   const WordCloud: ComponentType<WordCloudProps>;

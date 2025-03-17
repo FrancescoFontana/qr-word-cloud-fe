@@ -50,8 +50,8 @@ export default function WordCloud({ words = [] }: WordCloudProps) {
 
   if (!words?.length) {
     return (
-      <div className="flex items-center justify-center h-screen w-screen bg-gray-50">
-        <p className="text-gray-500 text-xl">No words yet</p>
+      <div className="flex items-center justify-center h-screen w-screen">
+        <p className="text-white/50 text-xl">No words yet</p>
       </div>
     );
   }
@@ -67,6 +67,7 @@ export default function WordCloud({ words = [] }: WordCloudProps) {
         rotate={0}
         padding={3}
         random={() => 0.5}
+        fill={(word: Word) => `hsl(${(word.value * 137.5) % 360}, 70%, 50%)`}
       />
     </div>
   );
