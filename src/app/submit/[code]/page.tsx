@@ -18,10 +18,10 @@ export default function SubmitPage() {
   const params = useParams();
   const code = params.code as string;
   const [input, setInput] = useState('');
-  const { words, blurred, error } = useWordCloudStore();
+  const { words, isBlurred, error } = useWordCloudStore();
 
   useEffect(() => {
-    wsService.connect(code);
+    wsService.connect(code, false);
     return () => {
       wsService.disconnect();
     };
@@ -54,7 +54,7 @@ export default function SubmitPage() {
         
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Word Cloud</h2>
-          <div className={`transition-all duration-1000 ${blurred ? 'blur-sm' : ''}`}>
+          <div className={`transition-all duration-1000 ${isBlurred ? 'blur-sm' : ''}`}>
             <WordCloud words={words} />
           </div>
         </div>

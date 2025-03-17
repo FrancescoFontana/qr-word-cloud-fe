@@ -30,19 +30,29 @@ class WebSocketService {
   private reconnectTimeout = 1000;
   private wordMap: Map<string, number> = new Map();
   private isInitialLoad: boolean = true;
+  private keepAliveInterval: NodeJS.Timeout | null = null;
+  private isViewPage: boolean = false;
 
   constructor(private url: string) {}
 
-  connect(code: string) {
+  connect(code: string, isViewPage: boolean = false) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       return;
     }
 
+    this.isViewPage = isViewPage;
     console.log('🔵 [WebSocket v3] Initializing connection to:', this.url);
     this.ws = new WebSocket(this.url);
     this.setupEventListeners(code);
     this.reconnectAttempts = 0;
     this.isInitialLoad = true;
+
+    // Start keep-alive interval
+    this.keepAliveInterval = setInterval(() => {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 30000); // Send ping every 30 seconds
   }
 
   private updateWordCloud() {
@@ -82,13 +92,26 @@ class WebSocketService {
             });
             this.updateWordCloud();
             
-            // Only unblur if it's not the initial load
-            if (!this.isInitialLoad) {
+            // Handle blur state based on page type and newWord field
+            if (data.newWord) {
+              if (this.isViewPage) {
+                // On view page, unblur for 3 seconds when new word arrives
+                useWordCloudStore.getState().setBlurred(false);
+                setTimeout(() => {
+                  useWordCloudStore.getState().setBlurred(true);
+                }, 3000);
+              } else {
+                // On artwork page, unblur and stay unblurred when new word arrives
+                useWordCloudStore.getState().setBlurred(false);
+              }
+            } else if (!this.isInitialLoad) {
+              // For non-new-word updates, only unblur if not initial load
               useWordCloudStore.getState().setBlurred(false);
-              // Re-blur after 3 seconds
-              setTimeout(() => {
-                useWordCloudStore.getState().setBlurred(true);
-              }, 3000);
+              if (this.isViewPage) {
+                setTimeout(() => {
+                  useWordCloudStore.getState().setBlurred(true);
+                }, 3000);
+              }
             }
           }
           break;
@@ -99,13 +122,21 @@ class WebSocketService {
       }
     };
 
-    this.ws.onclose = () => {
-      console.log('WebSocket disconnected');
+    this.ws.onclose = (event) => {
+      console.log(`WebSocket disconnected with code ${event.code} and reason: ${event.reason}`);
       this.handleReconnect(code);
     };
 
     this.ws.onerror = (error) => {
       console.error('WebSocket error:', error);
+      // Log additional connection state information
+      if (this.ws) {
+        console.log('WebSocket state:', {
+          readyState: this.ws.readyState,
+          url: this.ws.url,
+          protocol: this.ws.protocol
+        });
+      }
       this.handleReconnect(code);
     };
   }
@@ -121,6 +152,10 @@ class WebSocketService {
   }
 
   disconnect() {
+    if (this.keepAliveInterval) {
+      clearInterval(this.keepAliveInterval);
+      this.keepAliveInterval = null;
+    }
     if (this.ws) {
       this.ws.close();
       this.ws = null;
