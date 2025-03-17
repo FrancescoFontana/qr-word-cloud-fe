@@ -43,15 +43,15 @@ export default function WordCloud({ words = [] }: WordCloudProps) {
     // Scale the values for better visualization
     return words.map(word => ({
       ...word,
-      // Scale between 20 and 100 based on frequency
-      value: 20 + ((word.value - minValue) / (maxValue - minValue || 1)) * 80
+      // Scale between 30 and 120 based on frequency for better visibility
+      value: 30 + ((word.value - minValue) / (maxValue - minValue || 1)) * 90
     }));
   }, [words]);
 
   if (!words?.length) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
-        <p className="text-white/50 text-xl">No words yet</p>
+        <p className="text-white/50 text-xl tracking-widest uppercase">No words yet</p>
       </div>
     );
   }
@@ -64,13 +64,28 @@ export default function WordCloud({ words = [] }: WordCloudProps) {
         height={dimensions.height}
         font="Inter"
         fontSize={(word: Word) => word.value}
-        rotate={0}
-        padding={3}
+        rotate={15}
+        padding={5}
         random={() => 0.5}
         fill={(word: Word) => {
-          // Use grayscale colors based on word value
-          const intensity = Math.floor((word.value / 100) * 255);
-          return `rgb(${intensity}, ${intensity}, ${intensity})`;
+          // Create a more artistic color scheme with better contrast
+          const value = word.value;
+          if (value > 100) {
+            // Most prominent words in bright white
+            return '#ffffff';
+          } else if (value > 80) {
+            // Very prominent words in light gray with slight blue tint
+            return '#e0e0ff';
+          } else if (value > 60) {
+            // Medium prominent words in light gray with slight purple tint
+            return '#e0e0e0';
+          } else if (value > 40) {
+            // Less prominent words in medium gray with slight pink tint
+            return '#c0c0c0';
+          } else {
+            // Least prominent words in darker gray with slight green tint
+            return '#a0a0a0';
+          }
         }}
       />
     </div>
