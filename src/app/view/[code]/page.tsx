@@ -10,7 +10,7 @@ const WordCloud = dynamic(() => import('@/components/WordCloud'), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0 flex items-center justify-center">
-      <p className="text-white/50 text-xl">Loading word cloud...</p>
+      <p className="text-white/30 text-sm tracking-widest uppercase">Loading...</p>
     </div>
   ),
 });
@@ -33,22 +33,22 @@ export default function ViewPage() {
   }, [code]);
 
   return (
-    <div className="fixed inset-0 overflow-hidden">
-      <div className={`absolute inset-0 transition-all duration-1000 ${isBlurred ? 'blur-lg opacity-50' : ''}`}>
+    <div className="fixed inset-0 overflow-hidden bg-black">
+      <div className={`absolute inset-0 transition-all duration-1000 ${isBlurred ? 'blur-xl opacity-30' : ''}`}>
         <WordCloud words={words} />
       </div>
 
       <div className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 ${isBlurred ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg p-4 sm:p-8 text-white text-center mx-4">
+        <div className="text-center">
           <QRCodeSVG
             value={artworkUrl}
-            size={Math.min(200, window.innerWidth * 0.6)}
+            size={Math.min(180, window.innerWidth * 0.5)}
             level="H"
             includeMargin={true}
-            className="mx-auto mb-2 sm:mb-4"
+            className="mx-auto mb-6"
           />
-          <p className="text-xs sm:text-sm">
-            Scan to add words to the cloud
+          <p className="text-white/60 text-xs tracking-[0.2em] uppercase font-light">
+            Scan to contribute
           </p>
         </div>
       </div>

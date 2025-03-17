@@ -8,8 +8,8 @@ import { useWordCloudStore, wsService } from '@/services/websocket';
 const WordCloud = dynamic(() => import('@/components/WordCloud'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-      <p className="text-gray-500">Loading word cloud...</p>
+    <div className="flex items-center justify-center h-64">
+      <p className="text-white/30 text-sm tracking-widest uppercase">Loading...</p>
     </div>
   ),
 });
@@ -32,7 +32,6 @@ export default function SubmitPage() {
     if (!input.trim()) return;
 
     try {
-      // Send the new word to the server
       wsService.sendWord(input.trim());
       setInput('');
     } catch (err) {
@@ -41,36 +40,35 @@ export default function SubmitPage() {
   };
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold text-center">Submit Words</h1>
-        <p className="text-center text-gray-600">Code: {code}</p>
+    <main className="min-h-screen bg-black text-white p-4 sm:p-8">
+      <div className="max-w-4xl mx-auto space-y-12">
+        <div className="text-center">
+          <h1 className="text-2xl sm:text-3xl font-light tracking-widest uppercase mb-2">Contribute</h1>
+          <p className="text-white/40 text-sm tracking-[0.2em] uppercase">Code: {code}</p>
+        </div>
         
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="text-red-400/80 text-sm tracking-wide text-center">
             {error}
           </div>
         )}
         
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Word Cloud</h2>
-          <div className={`transition-all duration-1000 ${isBlurred ? 'blur-sm' : ''}`}>
-            <WordCloud words={words} />
-          </div>
+        <div className={`transition-all duration-1000 ${isBlurred ? 'opacity-30' : ''}`}>
+          <WordCloud words={words} />
         </div>
         
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
+        <form onSubmit={handleSubmit} className="max-w-md mx-auto">
           <div className="flex gap-4">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Enter a word..."
-              className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 bg-transparent border-b border-white/20 text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-colors duration-200 text-sm tracking-wide"
             />
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white text-sm tracking-wider uppercase transition-colors duration-200"
             >
               Submit
             </button>
