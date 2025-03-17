@@ -1,7 +1,9 @@
 'use client';
 
-import { useMemo, useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useEffect, useState } from 'react';
+import Cloud from 'react-d3-cloud';
+import { scaleOrdinal } from 'd3-scale';
+import { schemeCategory10 } from 'd3-scale-chromatic';
 
 interface Word {
   text: string;
@@ -9,85 +11,45 @@ interface Word {
 }
 
 interface WordCloudProps {
-  words: Word[];
+  words: string[];
 }
 
-// Dynamically import the Cloud component with no SSR
-const Cloud = dynamic(() => import('react-d3-cloud'), {
-  ssr: false,
-});
-
-export const WordCloud = ({ words = [] }: WordCloudProps) => {
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+export function WordCloud({ words }: WordCloudProps) {
+  const [mounted, setMounted] = useState(false);
+  const [processedWords, setProcessedWords] = useState<Word[]>([]);
 
   useEffect(() => {
-    const updateDimensions = () => {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
-    };
-
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+    setMounted(true);
   }, []);
 
-  const cloudWords = useMemo(() => {
-    if (!words?.length) return [];
-    
-    // Find the maximum value for scaling
-    const maxValue = Math.max(...words.map(w => w.value));
-    const minValue = Math.min(...words.map(w => w.value));
-    
-    // Scale the values for better visualization
-    return words.map(word => ({
-      ...word,
-      // Scale between 30 and 120 based on frequency for better visibility
-      value: 30 + ((word.value - minValue) / (maxValue - minValue || 1)) * 90
+  useEffect(() => {
+    // Convert string array to Word array with random sizes
+    const processed = words.map(word => ({
+      text: word,
+      value: Math.random() * 50 + 20 // Random size between 20 and 70
     }));
+    setProcessedWords(processed);
   }, [words]);
 
-  if (!words?.length) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <p className="text-white/50 text-xl tracking-widest uppercase">No words yet</p>
-      </div>
-    );
+  if (!mounted) {
+    return null;
   }
 
+  const colorScale = scaleOrdinal(schemeCategory10);
+
   return (
-    <div className="fixed inset-0 overflow-hidden">
+    <div className="w-full h-[600px] flex items-center justify-center">
       <Cloud
-        data={cloudWords}
-        width={dimensions.width}
-        height={dimensions.height}
+        data={processedWords}
+        width={800}
+        height={600}
         font="Inter"
         fontSize={(word: Word) => word.value}
-        rotate={15}
+        rotate={0}
         padding={5}
         random={() => 0.5}
-        fill={(word: Word) => {
-          // Create a more artistic color scheme with better contrast
-          const value = word.value;
-          if (value > 100) {
-            // Most prominent words in bright white
-            return '#ffffff';
-          } else if (value > 80) {
-            // Very prominent words in light gray with slight blue tint
-            return '#e0e0ff';
-          } else if (value > 60) {
-            // Medium prominent words in light gray with slight purple tint
-            return '#e0e0e0';
-          } else if (value > 40) {
-            // Less prominent words in medium gray with slight pink tint
-            return '#c0c0c0';
-          } else {
-            // Least prominent words in darker gray with slight green tint
-            return '#a0a0a0';
-          }
-        }}
+        fill={(word: Word) => colorScale(word.text)}
       />
     </div>
   );
-}; 
+} 
