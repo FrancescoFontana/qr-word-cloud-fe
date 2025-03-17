@@ -50,14 +50,14 @@ export default function WordCloud({ words = [] }: WordCloudProps) {
 
   if (!words?.length) {
     return (
-      <div className="flex items-center justify-center h-screen w-screen">
+      <div className="fixed inset-0 flex items-center justify-center">
         <p className="text-white/50 text-xl">No words yet</p>
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden">
       <Cloud
         data={cloudWords}
         width={dimensions.width}

@@ -8,8 +8,8 @@ import { useWordCloudStore, wsService } from '@/services/websocket';
 const WordCloud = dynamic(() => import('@/components/WordCloud'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-      <p className="text-gray-500">Loading word cloud...</p>
+    <div className="fixed inset-0 flex items-center justify-center">
+      <p className="text-white/50 text-xl">Loading word cloud...</p>
     </div>
   ),
 });
@@ -17,7 +17,7 @@ const WordCloud = dynamic(() => import('@/components/WordCloud'), {
 export default function ViewPage() {
   const params = useParams();
   const code = params.code as string;
-  const { words, blurred } = useWordCloudStore();
+  const { words, isBlurred } = useWordCloudStore();
 
   useEffect(() => {
     wsService.connect(code);
@@ -27,18 +27,20 @@ export default function ViewPage() {
   }, [code]);
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold text-center">Word Cloud Display</h1>
-        <p className="text-center text-gray-600">Code: {code}</p>
-        
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Word Cloud</h2>
-          <div className={`transition-all duration-1000 ${blurred ? 'blur-sm' : ''}`}>
-            <WordCloud words={words} />
+    <div className="fixed inset-0 overflow-hidden">
+      <div className={`absolute inset-0 transition-all duration-1000 ${isBlurred ? 'blur-lg opacity-50' : ''}`}>
+        <WordCloud words={words} />
+      </div>
+
+      {isBlurred && (
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-500">
+          <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg p-4 text-white text-center">
+            <p className="text-sm">
+              Waiting for new words...
+            </p>
           </div>
         </div>
-      </div>
-    </main>
+      )}
+    </div>
   );
 } 
