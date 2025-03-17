@@ -29,6 +29,7 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
   private reconnectTimeout = 1000;
   private wordMap: Map<string, number> = new Map();
+  private isInitialLoad: boolean = true;
 
   constructor(private url: string) {}
 
@@ -41,6 +42,7 @@ class WebSocketService {
     this.ws = new WebSocket(this.url);
     this.setupEventListeners(code);
     this.reconnectAttempts = 0;
+    this.isInitialLoad = true;
   }
 
   private updateWordCloud() {
@@ -80,12 +82,14 @@ class WebSocketService {
             });
             this.updateWordCloud();
             
-            // Unblur the word cloud when new words arrive
-            useWordCloudStore.getState().setBlurred(false);
-            // Re-blur after 3 seconds
-            setTimeout(() => {
-              useWordCloudStore.getState().setBlurred(true);
-            }, 3000);
+            // Only unblur if it's not the initial load
+            if (!this.isInitialLoad) {
+              useWordCloudStore.getState().setBlurred(false);
+              // Re-blur after 3 seconds
+              setTimeout(() => {
+                useWordCloudStore.getState().setBlurred(true);
+              }, 3000);
+            }
           }
           break;
 
@@ -126,6 +130,7 @@ class WebSocketService {
 
   sendWord(word: string) {
     if (this.ws?.readyState === WebSocket.OPEN) {
+      this.isInitialLoad = false; // Mark that we're no longer in initial load
       const message = { 
         type: 'send_word', 
         word: word.toLowerCase() // Normalize to lowercase before sending
