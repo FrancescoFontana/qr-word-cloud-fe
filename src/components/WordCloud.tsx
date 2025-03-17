@@ -17,7 +17,7 @@ const Cloud = dynamic(() => import('react-d3-cloud'), {
   ssr: false,
 });
 
-export default function WordCloud({ words = [] }: WordCloudProps) {
+export const WordCloud = ({ words = [] }: WordCloudProps) => {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   useEffect(() => {
@@ -90,4 +90,4 @@ export default function WordCloud({ words = [] }: WordCloudProps) {
       />
     </div>
   );
-} 
+}; 
