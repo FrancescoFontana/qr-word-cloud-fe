@@ -36,8 +36,12 @@ class WebSocketService {
       return;
     }
 
-    console.log('🔵 [WebSocket v3] Initializing connection');
-    this.ws = new WebSocket(this.url);
+    // Ensure we're using the correct protocol based on the current window location
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = this.url.replace(/^https?:/, wsProtocol);
+    
+    console.log('🔵 [WebSocket v3] Initializing connection to:', wsUrl);
+    this.ws = new WebSocket(wsUrl);
     this.setupEventListeners(code);
     this.reconnectAttempts = 0;
   }
@@ -120,4 +124,9 @@ class WebSocketService {
   }
 }
 
-export const wsService = new WebSocketService(process.env.NEXT_PUBLIC_WS_URL || 'wss://qr-word-cloud-be.onrender.com/ws'); 
+// Use the same host as the current window, but with WebSocket protocol
+const wsUrl = typeof window !== 'undefined' 
+  ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
+  : 'ws://localhost:8000/ws';
+
+export const wsService = new WebSocketService(wsUrl); 
