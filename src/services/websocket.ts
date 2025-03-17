@@ -23,7 +23,7 @@ export const useWordCloudStore = create<WordCloudState>((set) => ({
   setBlurred: (isBlurred) => set({ isBlurred }),
 }));
 
-class WebSocketService {
+export class WebSocketService {
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
@@ -32,6 +32,7 @@ class WebSocketService {
   private isInitialLoad: boolean = true;
   private keepAliveInterval: NodeJS.Timeout | null = null;
   private isViewPage: boolean = false;
+  private messageHandlers: Map<string, ((data: any) => void)[]> = new Map();
 
   constructor(private url: string) {}
 
