@@ -28,6 +28,7 @@ class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectTimeout = 1000;
+  private wordMap: Map<string, number> = new Map();
 
   constructor(private url: string) {}
 
@@ -40,6 +41,14 @@ class WebSocketService {
     this.ws = new WebSocket(this.url);
     this.setupEventListeners(code);
     this.reconnectAttempts = 0;
+  }
+
+  private updateWordCloud() {
+    const words = Array.from(this.wordMap.entries()).map(([text, value]) => ({
+      text,
+      value
+    }));
+    useWordCloudStore.getState().setWords(words);
   }
 
   private setupEventListeners(code: string) {
@@ -63,8 +72,14 @@ class WebSocketService {
       switch (data.type) {
         case 'update_cloud':
           if (data.words) {
-            // Update the word cloud with the new words array
-            useWordCloudStore.getState().setWords(data.words);
+            // Clear the word map and update with new words
+            this.wordMap.clear();
+            data.words.forEach((word: string) => {
+              const normalizedWord = word.toLowerCase();
+              this.wordMap.set(normalizedWord, (this.wordMap.get(normalizedWord) || 0) + 1);
+            });
+            this.updateWordCloud();
+            
             // Unblur the word cloud when new words arrive
             useWordCloudStore.getState().setBlurred(false);
             // Re-blur after 3 seconds
@@ -105,6 +120,7 @@ class WebSocketService {
     if (this.ws) {
       this.ws.close();
       this.ws = null;
+      this.wordMap.clear();
     }
   }
 
