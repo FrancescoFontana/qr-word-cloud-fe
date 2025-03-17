@@ -58,7 +58,7 @@ export default function DisplayPage({ params }: PageProps) {
   }, [words, setBlurred]);
 
   return (
-    <div className="fixed inset-0 overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden m-0 p-0">
       {/* Word Cloud Container */}
       <div className={`absolute inset-0 transition-all duration-1000 ${isBlurred ? 'blur-lg opacity-50' : ''}`}>
         <div className="absolute inset-0">

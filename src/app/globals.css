@@ -3,32 +3,38 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 17, 24, 39;
+  --background-end-rgb: 31, 41, 55;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
-  min-height: 100vh;
-}
-
-.blur-sm {
-  backdrop-filter: blur(4px);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 @keyframes fadeOut {
-  0% {
+  from {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
-  100% {
+  to {
     opacity: 0;
-    transform: translate(-50%, 20px);
+    transform: translateY(10px);
   }
 }
 
 .animate-fade-out {
   animation: fadeOut 1s ease-out forwards;
+}
+
+.blur-sm {
+  backdrop-filter: blur(8px);
 } 
