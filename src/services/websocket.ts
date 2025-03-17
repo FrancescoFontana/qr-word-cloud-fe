@@ -36,6 +36,23 @@ export class WebSocketService {
 
   constructor(private url: string) {}
 
+  addEventListener(type: string, handler: (event: MessageEvent) => void) {
+    if (!this.messageHandlers.has(type)) {
+      this.messageHandlers.set(type, []);
+    }
+    this.messageHandlers.get(type)?.push(handler);
+  }
+
+  removeEventListener(type: string, handler: (event: MessageEvent) => void) {
+    const handlers = this.messageHandlers.get(type);
+    if (handlers) {
+      const index = handlers.indexOf(handler);
+      if (index !== -1) {
+        handlers.splice(index, 1);
+      }
+    }
+  }
+
   connect(code: string, isViewPage: boolean = false) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       return;
@@ -81,6 +98,9 @@ export class WebSocketService {
     this.ws.onmessage = (event) => {
       console.log('📥 [WebSocket v3] Received message:', event.data);
       const data = JSON.parse(event.data);
+      
+      // Call registered message handlers
+      this.messageHandlers.get('message')?.forEach(handler => handler(event));
       
       switch (data.type) {
         case 'update_cloud':
@@ -177,4 +197,4 @@ export class WebSocketService {
   }
 }
 
-export const wsService = new WebSocketService('wss://qr-word-cloud-be.onrender.com/ws'); 
+export const wsService = new WebSocketService(process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws'); 

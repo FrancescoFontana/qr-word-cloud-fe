@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { WordCloud } from '@/components/WordCloud';
-import { WebSocketService } from '@/services/WebSocketService';
 import QRCode from 'qrcode';
 
 export default function ViewPage() {
@@ -11,26 +10,76 @@ export default function ViewPage() {
   const code = params.code as string;
   const [isLoading, setIsLoading] = useState(true);
   const [words, setWords] = useState<string[]>([]);
-  const [isBlurred, setIsBlurred] = useState(false);
+  const [isBlurred, setIsBlurred] = useState(true);
   const [qrCode, setQrCode] = useState<string>('');
+  const [ws, setWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
-    const ws = WebSocketService.getInstance();
-    
-    ws.onMessage((data) => {
-      if (data.type === 'update_cloud') {
-        setWords(data.words || []);
-      } else if (data.type === 'update_blur') {
-        setIsBlurred(data.isBlurred || false);
-      }
-      setIsLoading(false);
-    });
+    // Only run on client side
+    if (typeof window === 'undefined') return;
 
-    ws.connect();
-    ws.joinArtwork(code);
+    // Use environment variable for WebSocket URL
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws';
+    console.log('🔵 [WebSocket v3] Initializing connection to:', wsUrl);
+    
+    const socket = new WebSocket(wsUrl);
+    setWs(socket);
+    
+    socket.onopen = () => {
+      console.log('🟢 [WebSocket v3] Connected');
+      const message = {
+        type: 'join_artwork',
+        artworkCode: code
+      };
+      console.log('📤 [WebSocket v3] Sending message:', message);
+      socket.send(JSON.stringify(message));
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('📥 [WebSocket v3] Received message:', data);
+        if (data.type === 'update_cloud') {
+          console.log('📊 [WebSocket v3] Words data:', data.words);
+          console.log('📊 [WebSocket v3] Words data type:', typeof data.words);
+          console.log('📊 [WebSocket v3] Is words an array?', Array.isArray(data.words));
+          
+          // Ensure we're setting an array of strings
+          const wordArray = Array.isArray(data.words) 
+            ? data.words
+                .filter((word: unknown) => typeof word === 'string' && String(word).trim().length > 0)
+                .map((word: unknown) => String(word).trim())
+            : [];
+          console.log('✨ [WebSocket v3] Processed word array:', wordArray);
+          setWords(wordArray);
+        } else if (data.type === 'update_blur') {
+          setIsBlurred(data.isBlurred ?? true);
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+        setWords([]);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log('🔴 [WebSocket v3] Disconnected');
+      // Attempt to reconnect after a delay
+      setTimeout(() => {
+        if (socket.readyState === WebSocket.CLOSED) {
+          socket.close();
+        }
+      }, 1000);
+    };
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
 
     return () => {
-      ws.disconnect();
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
     };
   }, [code]);
 
