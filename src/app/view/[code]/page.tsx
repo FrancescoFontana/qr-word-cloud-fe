@@ -15,13 +15,13 @@ export default function ViewPage() {
   const [qrCode, setQrCode] = useState<string>('');
 
   useEffect(() => {
-    const ws = new WebSocketService();
+    const ws = WebSocketService.getInstance();
     
     ws.onMessage((data) => {
       if (data.type === 'update_cloud') {
-        setWords(data.words);
+        setWords(data.words || []);
       } else if (data.type === 'update_blur') {
-        setIsBlurred(data.isBlurred);
+        setIsBlurred(data.isBlurred || false);
       }
       setIsLoading(false);
     });

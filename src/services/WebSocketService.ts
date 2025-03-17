@@ -5,18 +5,24 @@ interface WebSocketMessage {
   artworkCode?: string;
 }
 
-export class WebSocketService {
+class WebSocketService {
+  private static instance: WebSocketService;
   private ws: WebSocket | null = null;
   private messageHandler: ((data: WebSocketMessage) => void) | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
-  constructor() {
-    this.connect();
+  private constructor() {}
+
+  public static getInstance(): WebSocketService {
+    if (!WebSocketService.instance) {
+      WebSocketService.instance = new WebSocketService();
+    }
+    return WebSocketService.instance;
   }
 
-  private connect() {
+  private initializeConnection() {
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://qr-word-cloud-be.onrender.com/ws';
     console.log('🔵 [WebSocket v3] Initializing connection to:', wsUrl);
     
@@ -57,7 +63,7 @@ export class WebSocketService {
       }
       
       this.reconnectTimeout = setTimeout(() => {
-        this.connect();
+        this.initializeConnection();
       }, 1000 * Math.min(this.reconnectAttempts, 5));
     }
   }
@@ -77,6 +83,12 @@ export class WebSocketService {
     }
   }
 
+  public connect() {
+    if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
+      this.initializeConnection();
+    }
+  }
+
   public disconnect() {
     if (this.ws) {
       this.ws.close();
@@ -88,4 +100,6 @@ export class WebSocketService {
     }
     this.messageHandler = null;
   }
-} 
+}
+
+export { WebSocketService }; 
