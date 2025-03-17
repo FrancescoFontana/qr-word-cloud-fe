@@ -39,15 +39,15 @@ export default function ViewPage() {
       </div>
 
       <div className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 ${isBlurred ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg p-8 text-white text-center">
+        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg p-4 sm:p-8 text-white text-center mx-4">
           <QRCodeSVG
             value={artworkUrl}
-            size={200}
+            size={Math.min(200, window.innerWidth * 0.6)}
             level="H"
             includeMargin={true}
-            className="mx-auto mb-4"
+            className="mx-auto mb-2 sm:mb-4"
           />
-          <p className="text-sm">
+          <p className="text-xs sm:text-sm">
             Scan to add words to the cloud
           </p>
         </div>
