@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 const WordCloud = dynamic(() => import('@/components/WordCloud'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-screen w-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="flex items-center justify-center h-screen w-screen">
       <p className="text-white/50 text-xl">Loading word cloud...</p>
     </div>
   ),
@@ -58,7 +58,7 @@ export default function DisplayPage({ params }: PageProps) {
   }, [words, setBlurred]);
 
   return (
-    <main className="fixed inset-0 bg-gradient-to-br from-gray-900 to-gray-800 overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden">
       {/* Word Cloud Container */}
       <div className={`absolute inset-0 transition-all duration-1000 ${isBlurred ? 'blur-lg opacity-50' : ''}`}>
         <div className="absolute inset-0">
@@ -83,6 +83,6 @@ export default function DisplayPage({ params }: PageProps) {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 } 
