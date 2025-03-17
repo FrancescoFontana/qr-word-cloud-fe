@@ -1,4 +1,4 @@
-import WordCloud from '@/components/WordCloud';
+import { WordCloud } from '@/components/WordCloud';
 
 export default function Home() {
   // Example words for the word cloud
