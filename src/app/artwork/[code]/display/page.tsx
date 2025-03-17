@@ -58,10 +58,12 @@ export default function DisplayPage({ params }: PageProps) {
   }, [words, setBlurred]);
 
   return (
-    <div className="relative min-h-screen w-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <main className="fixed inset-0 bg-gradient-to-br from-gray-900 to-gray-800 overflow-hidden">
       {/* Word Cloud Container */}
       <div className={`absolute inset-0 transition-all duration-1000 ${isBlurred ? 'blur-lg opacity-50' : ''}`}>
-        <WordCloud words={words} />
+        <div className="absolute inset-0">
+          <WordCloud words={words} />
+        </div>
       </div>
 
       {/* Error Display */}
@@ -81,6 +83,6 @@ export default function DisplayPage({ params }: PageProps) {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 } 
