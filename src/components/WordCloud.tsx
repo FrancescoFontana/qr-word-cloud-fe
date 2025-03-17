@@ -1,40 +1,78 @@
 'use client';
 
-import React from 'react';
-import ReactWordcloud from 'react-wordcloud';
-import 'tippy.js/dist/tippy.css';
-import 'tippy.js/animations/scale.css';
+import { useMemo, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 
-interface WordCloudProps {
-  words: Array<{
-    text: string;
-    value: number;
-  }>;
+interface Word {
+  text: string;
+  value: number;
 }
 
-const WordCloud: React.FC<WordCloudProps> = ({ words }) => {
-  const options = {
-    rotations: 0,
-    rotationAngles: [0],
-    fontSizes: [20, 60],
-    padding: 5,
-    fontFamily: 'Inter, system-ui, sans-serif',
-    colors: ['#ffffff', '#e0e0e0', '#c0c0c0', '#a0a0a0', '#808080'],
-    enableTooltip: true,
-    deterministic: true,
-    randomSeed: 42,
-    minRotation: 0,
-    maxRotation: 0,
-    spiral: 'archimedean',
-    scale: 'sqrt',
-    transitionDuration: 1000,
-  };
+interface WordCloudProps {
+  words: Word[];
+}
+
+// Dynamically import the Cloud component with no SSR
+const Cloud = dynamic(() => import('react-d3-cloud'), {
+  ssr: false,
+});
+
+export default function WordCloud({ words = [] }: WordCloudProps) {
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  const cloudWords = useMemo(() => {
+    if (!words?.length) return [];
+    
+    // Find the maximum value for scaling
+    const maxValue = Math.max(...words.map(w => w.value));
+    const minValue = Math.min(...words.map(w => w.value));
+    
+    // Scale the values for better visualization
+    return words.map(word => ({
+      ...word,
+      // Scale between 20 and 100 based on frequency
+      value: 20 + ((word.value - minValue) / (maxValue - minValue || 1)) * 80
+    }));
+  }, [words]);
+
+  if (!words?.length) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center">
+        <p className="text-white/50 text-xl">No words yet</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full h-full">
-      <ReactWordcloud words={words} options={options} />
+    <div className="fixed inset-0 overflow-hidden">
+      <Cloud
+        data={cloudWords}
+        width={dimensions.width}
+        height={dimensions.height}
+        font="Inter"
+        fontSize={(word: Word) => word.value}
+        rotate={0}
+        padding={3}
+        random={() => 0.5}
+        fill={(word: Word) => {
+          // Use grayscale colors based on word value
+          const intensity = Math.floor((word.value / 100) * 255);
+          return `rgb(${intensity}, ${intensity}, ${intensity})`;
+        }}
+      />
     </div>
   );
-};
-
-export default WordCloud; 
+} 
