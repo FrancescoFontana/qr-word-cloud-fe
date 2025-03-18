@@ -1,16 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { use } from 'react';
 import { WordCloud } from '@/components/WordCloud';
 import { wsService } from '@/services/websocket';
 
 interface PageProps {
-  params: Promise<{ code: string }>;
+  params: {
+    code: string;
+  };
 }
 
 export default function ArtworkPage({ params }: PageProps) {
-  const { code } = use(params);
+  const { code } = params;
   const [words, setWords] = useState<string[]>([]);
 
   useEffect(() => {
