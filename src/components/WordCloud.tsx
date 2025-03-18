@@ -20,14 +20,25 @@ interface CloudProps {
 }
 
 // Dynamically import the Cloud component with SSR disabled
-const Cloud = dynamic(() => import('react-d3-cloud').then((mod) => mod.default), {
-  ssr: false,
-  loading: () => (
-    <div className="text-white/80 text-lg animate-pulse-slow">
-      Loading word cloud...
-    </div>
-  ),
-});
+const Cloud = dynamic(
+  async () => {
+    const mod = await import('react-d3-cloud');
+    console.log('Loaded module:', mod);
+    if (!mod.default) {
+      console.error('Module does not have a default export:', mod);
+      throw new Error('Failed to load Cloud component');
+    }
+    return mod.default;
+  },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="text-white/80 text-lg animate-pulse-slow">
+        Loading word cloud...
+      </div>
+    ),
+  }
+);
 
 interface WordCloudProps {
   words: string[];
