@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { WordCloud } from '@/components/WordCloud';
 import { wsService } from '@/services/websocket';
 import { QRCodeSVG } from 'qrcode.react';
+import Image from 'next/image';
 
 interface PageProps {
   params: {
@@ -20,6 +21,7 @@ export default function ViewPage({ params }: PageProps) {
   const [showQR, setShowQR] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [artworkUrl, setArtworkUrl] = useState('');
+  const [qrCode, setQrCode] = useState<string | null>(null);
 
   useEffect(() => {
     // Set artwork URL after component mounts
@@ -66,6 +68,8 @@ export default function ViewPage({ params }: PageProps) {
         } else if (data.type === 'error') {
           setError(data.message);
           setTimeout(() => setError(null), 3000);
+        } else if (data.type === 'qr_code' && typeof data.qrCode === 'string') {
+          setQrCode(data.qrCode);
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
@@ -79,49 +83,48 @@ export default function ViewPage({ params }: PageProps) {
   }, [isInitialLoad]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
-      {/* Error Message */}
-      {error && (
-        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-200 px-6 py-3 rounded-lg shadow-lg z-50">
-          {error}
-        </div>
-      )}
+    <div className="min-h-screen bg-black text-white p-4 sm:p-6 md:p-8">
+      {/* Word Cloud Container */}
+      <div 
+        className={`fixed inset-0 w-full h-screen transition-all duration-1000 ${
+          isBlurred ? 'blur-xl' : ''
+        }`}
+      >
+        <WordCloud words={words} />
+      </div>
 
-      {/* Loading State */}
-      {isLoading ? (
-        <div className="absolute inset-0 flex items-center justify-center z-30">
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 text-center shadow-2xl">
-            <p className="text-2xl font-light animate-pulse text-white">
-              Loading word cloud...
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="relative w-full h-screen">
-          {/* Word Cloud Container */}
-          <div 
-            className={`fixed inset-0 w-full h-screen transition-all duration-1000 ${
-              isBlurred ? 'blur-xl' : ''
-            }`}
-          >
-            <WordCloud words={words} />
-          </div>
-
-          {/* QR Code Section */}
-          {showQR && artworkUrl && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-500 z-40">
-              <div className="flex flex-col items-center space-y-6">
-                <div className="bg-white p-6 rounded-xl transform hover:scale-105 transition-transform duration-300 shadow-2xl">
-                  <QRCodeSVG value={artworkUrl} size={200} />
-                </div>
-                <p className="text-2xl text-white font-light tracking-wide">
-                  Scan to contribute to the artwork
-                </p>
+      {/* Content Overlay */}
+      <div className="relative z-40 flex flex-col items-center justify-center min-h-screen">
+        {/* QR Code Section */}
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 md:p-8 w-full max-w-md mx-auto mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-center">
+            Scan to Add Words
+          </h1>
+          <div className="flex justify-center mb-4 sm:mb-6">
+            {qrCode && (
+              <div className="bg-white p-2 sm:p-3 rounded-lg">
+                <Image
+                  src={qrCode}
+                  alt="QR Code"
+                  width={200}
+                  height={200}
+                  className="w-48 sm:w-56 md:w-64 h-auto"
+                />
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          <p className="text-sm sm:text-base text-center text-gray-300">
+            Scan this QR code with your phone to add words to the cloud
+          </p>
         </div>
-      )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-50 bg-red-500/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+            {error}
+          </div>
+        )}
+      </div>
     </div>
   );
 } 

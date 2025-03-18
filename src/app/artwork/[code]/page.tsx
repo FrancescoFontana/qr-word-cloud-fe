@@ -76,7 +76,7 @@ export default function ArtworkPage({ params }: PageProps) {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
+    <div className="min-h-screen bg-black text-white p-4 sm:p-6 md:p-8">
       {/* Background Word Cloud - Always visible but blurred until submission */}
       <div 
         className={`fixed inset-0 w-full h-screen transition-all duration-1000 ${
@@ -86,46 +86,51 @@ export default function ArtworkPage({ params }: PageProps) {
         <WordCloud words={words} />
       </div>
 
-      {/* Content Container */}
-      <div className="relative z-40 min-h-screen flex flex-col items-center justify-center">
-        {/* Error Message */}
-        {error && (
-          <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-200 px-6 py-3 rounded-lg shadow-lg z-50">
-            {error}
-          </div>
-        )}
-
+      {/* Content Overlay */}
+      <div className="relative z-40 flex flex-col items-center justify-center min-h-screen">
         {/* Input Form - Only visible before submission */}
         {!hasSubmitted && (
-          <div className="w-full max-w-md transform transition-all duration-500 px-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Enter a word or short phrase..."
-                maxLength={50}
-                className="w-full px-6 py-4 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all duration-300 shadow-lg text-xl"
-                autoFocus
-              />
+          <div className="w-full max-w-md mx-auto">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Enter a word or short sentence..."
+                  className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 text-base sm:text-lg"
+                  maxLength={50}
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                  {inputValue.length}/50
+                </div>
+              </div>
               <button
                 type="submit"
-                className="w-full px-6 py-4 rounded-xl bg-white/15 backdrop-blur-md text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all duration-300 font-medium tracking-wide shadow-lg text-xl"
+                className="w-full px-6 py-3 sm:py-4 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-xl text-white font-medium transition-colors duration-200 text-base sm:text-lg"
               >
-                Add to Artwork
+                Add to Cloud
               </button>
             </form>
           </div>
         )}
 
-        {/* Success Message - Shown briefly after submission */}
+        {/* Success Message */}
         {hasSubmitted && (
-          <div className="transform transition-all duration-500 opacity-0 animate-fade-out">
-            <div className="bg-white/15 backdrop-blur-md rounded-xl p-6 text-white text-center shadow-lg">
-              <p className="text-2xl font-light">
-                Word added to the artwork
-              </p>
-            </div>
+          <div className="text-center space-y-4 sm:space-y-6 animate-fade-out">
+            <p className="text-xl sm:text-2xl md:text-3xl font-light text-white">
+              Thank you for your contribution
+            </p>
+            <p className="text-sm sm:text-base text-gray-300">
+              Your word has been added to the cloud
+            </p>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-50 bg-red-500/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+            {error}
           </div>
         )}
       </div>

@@ -50,18 +50,18 @@ export function WordCloud({ words }: WordCloudProps) {
   const [processedWords, setProcessedWords] = useState<Word[]>([]);
   const [dimensions, setDimensions] = useState({ width: 1920, height: 1080 });
 
-  // Array of high-contrast colors for better visibility on dark background
+  // Modern, elegant color palette
   const colors = [
-    '#FF1493', // Deep Pink
-    '#00FF00', // Lime
-    '#FFD700', // Gold
-    '#FF4500', // Orange Red
-    '#00FFFF', // Cyan
-    '#FF00FF', // Magenta
-    '#FFFF00', // Yellow
-    '#1E90FF', // Dodger Blue
-    '#FF69B4', // Hot Pink
-    '#7FFF00', // Chartreuse
+    '#E8DFE0', // Soft Pearl
+    '#C9D1D3', // Mist Gray
+    '#F4D03F', // Elegant Gold
+    '#D5B8B0', // Dusty Rose
+    '#A2B3BB', // Steel Blue
+    '#BFA5A4', // Mauve
+    '#E6D2C7', // Champagne
+    '#D3BBDD', // Lavender Mist
+    '#B5D0D0', // Sea Glass
+    '#CEB5A7', // Taupe
   ];
 
   useEffect(() => {
@@ -91,13 +91,26 @@ export function WordCloud({ words }: WordCloudProps) {
     }
 
     try {
-      // Convert string array to Word objects with larger sizes
-      const processed = words
-        .filter(word => typeof word === 'string' && word.trim().length > 0)
-        .map(word => ({
-          text: String(word).trim(),
-          value: Math.random() * 80 + 60, // Random size between 60 and 140
-        }));
+      // Count word occurrences
+      const wordCounts = words.reduce((acc: { [key: string]: number }, word) => {
+        const trimmedWord = String(word).trim().toLowerCase();
+        if (trimmedWord.length > 0) {
+          acc[trimmedWord] = (acc[trimmedWord] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
+      // Convert to Word objects with size based on frequency
+      const maxCount = Math.max(...Object.values(wordCounts));
+      const minSize = 16; // Smaller minimum for mobile
+      const maxSize = 100; // Reduced maximum for better mobile display
+
+      const processed = Object.entries(wordCounts).map(([text, count]) => ({
+        text: text.charAt(0).toUpperCase() + text.slice(1),
+        value: minSize + ((count / maxCount) * (maxSize - minSize))
+      }));
+
+      console.log('Word counts:', wordCounts);
       console.log('Processed words:', processed);
       setProcessedWords(processed);
     } catch (error) {
@@ -128,12 +141,17 @@ export function WordCloud({ words }: WordCloudProps) {
         data={processedWords}
         width={dimensions.width}
         height={dimensions.height}
-        font="Inter"
-        fontSize={(word) => Math.max(word.value, 40)}
+        font="Playfair Display"
+        fontSize={(word) => word.value}
         rotate={0}
-        padding={30}
+        padding={20} // Reduced padding for mobile
         random={() => 0.5}
-        fill={(word) => colors[Math.floor(Math.random() * colors.length)]}
+        fill={(word) => {
+          // Use more muted colors for smaller words, brighter for larger ones
+          const normalizedSize = (word.value - 16) / (100 - 16); // 0 to 1
+          const colorIndex = Math.floor(normalizedSize * (colors.length - 1));
+          return colors[colorIndex];
+        }}
       />
     </div>
   );
