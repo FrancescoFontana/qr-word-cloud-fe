@@ -17,10 +17,11 @@ export default function ArtworkPage({ params }: PageProps) {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [isBlurred, setIsBlurred] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     console.log('Initializing WebSocket connection for code:', code);
-    wsService.connect(code);
+    wsService.connect(code, false); // Connect as artwork page
     return () => wsService.disconnect();
   }, [code]);
 
@@ -28,28 +29,36 @@ export default function ArtworkPage({ params }: PageProps) {
     const handleMessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('Received WebSocket message:', data);
+        console.log('📥 [WebSocket v3] Received message:', data);
         
         if (data.type === 'update_cloud' && Array.isArray(data.words)) {
-          console.log('Processing words array:', data.words);
-          const processedWords = data.words.map((word: any) => {
-            console.log('Processing word:', word, 'Type:', typeof word);
-            return String(word).trim();
-          }).filter(Boolean);
-          console.log('Final processed words:', processedWords);
+          console.log('📊 [WebSocket v3] Words data:', data.words);
+          // Ensure we're setting an array of strings
+          const processedWords = data.words
+            .filter((word: unknown) => typeof word === 'string' && String(word).trim().length > 0)
+            .map((word: unknown) => String(word).trim());
+          console.log('✨ [WebSocket v3] Processed words:', processedWords);
           setWords(processedWords);
+          
+          // Only update blur state if it's not the initial load and there's a new word
+          if (!isInitialLoad && data.newWord) {
+            setIsBlurred(false);
+          } else {
+            setIsInitialLoad(false);
+          }
         } else if (data.type === 'error') {
           setError(data.message);
           setTimeout(() => setError(null), 3000);
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
+        setWords([]);
       }
     };
 
     wsService.addEventListener('message', handleMessage);
     return () => wsService.removeEventListener('message', handleMessage);
-  }, []);
+  }, [isInitialLoad]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
