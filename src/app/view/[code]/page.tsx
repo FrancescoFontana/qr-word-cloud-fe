@@ -19,6 +19,12 @@ export default function ViewPage({ params }: PageProps) {
   const [isBlurred, setIsBlurred] = useState(true);
   const [showQR, setShowQR] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [artworkUrl, setArtworkUrl] = useState('');
+
+  useEffect(() => {
+    // Set artwork URL after component mounts
+    setArtworkUrl(`${window.location.origin}/artwork/${code}`);
+  }, [code]);
 
   useEffect(() => {
     console.log('Initializing WebSocket connection for code:', code);
@@ -72,8 +78,6 @@ export default function ViewPage({ params }: PageProps) {
     return () => wsService.removeEventListener('message', handleMessage);
   }, [isInitialLoad]);
 
-  const artworkUrl = `${window.location.origin}/artwork/${code}`;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-8">
       {/* Error Message */}
@@ -104,7 +108,7 @@ export default function ViewPage({ params }: PageProps) {
           </div>
 
           {/* QR Code Section */}
-          {showQR && (
+          {showQR && artworkUrl && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-500 rounded-2xl">
               <div className="flex flex-col items-center space-y-6">
                 <div className="bg-white p-6 rounded-xl transform hover:scale-105 transition-transform duration-300 shadow-2xl">
