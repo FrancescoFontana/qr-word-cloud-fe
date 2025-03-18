@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { WordCloud } from '@/components/WordCloud';
 import { wsService } from '@/services/websocket';
 import { QRCodeSVG } from 'qrcode.react';
-import Image from 'next/image';
 
 interface PageProps {
   params: {
@@ -21,7 +20,6 @@ export default function ViewPage({ params }: PageProps) {
   const [showQR, setShowQR] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [artworkUrl, setArtworkUrl] = useState('');
-  const [qrCode, setQrCode] = useState<string | null>(null);
 
   useEffect(() => {
     // Set artwork URL after component mounts
@@ -68,8 +66,6 @@ export default function ViewPage({ params }: PageProps) {
         } else if (data.type === 'error') {
           setError(data.message);
           setTimeout(() => setError(null), 3000);
-        } else if (data.type === 'qr_code' && typeof data.qrCode === 'string') {
-          setQrCode(data.qrCode);
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
@@ -96,27 +92,21 @@ export default function ViewPage({ params }: PageProps) {
       {/* Content Overlay */}
       <div className="relative z-40 flex flex-col items-center justify-center min-h-screen">
         {/* QR Code Section */}
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 md:p-8 w-full max-w-md mx-auto mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-center">
-            Scan to Add Words
-          </h1>
-          <div className="flex justify-center mb-4 sm:mb-6">
-            {qrCode && (
+        {showQR && artworkUrl && (
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 md:p-8 w-full max-w-md mx-auto mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-center">
+              Scan to Add Words
+            </h1>
+            <div className="flex justify-center mb-4 sm:mb-6">
               <div className="bg-white p-2 sm:p-3 rounded-lg">
-                <Image
-                  src={qrCode}
-                  alt="QR Code"
-                  width={200}
-                  height={200}
-                  className="w-48 sm:w-56 md:w-64 h-auto"
-                />
+                <QRCodeSVG value={artworkUrl} size={200} />
               </div>
-            )}
+            </div>
+            <p className="text-sm sm:text-base text-center text-gray-300">
+              Scan this QR code with your phone to add words to the cloud
+            </p>
           </div>
-          <p className="text-sm sm:text-base text-center text-gray-300">
-            Scan this QR code with your phone to add words to the cloud
-          </p>
-        </div>
+        )}
 
         {/* Error Message */}
         {error && (
