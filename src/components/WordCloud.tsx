@@ -48,6 +48,7 @@ interface WordCloudProps {
 export function WordCloud({ words }: WordCloudProps) {
   const [mounted, setMounted] = useState(false);
   const [processedWords, setProcessedWords] = useState<Word[]>([]);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   // Array of vibrant colors for better visibility on dark background
   const colors = [
@@ -65,6 +66,19 @@ export function WordCloud({ words }: WordCloudProps) {
 
   useEffect(() => {
     setMounted(true);
+    
+    // Update dimensions based on container size
+    const updateDimensions = () => {
+      const container = document.querySelector('.word-cloud-container');
+      if (container) {
+        const { width, height } = container.getBoundingClientRect();
+        setDimensions({ width, height });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
   useEffect(() => {
@@ -80,7 +94,7 @@ export function WordCloud({ words }: WordCloudProps) {
         .filter(word => typeof word === 'string' && word.trim().length > 0)
         .map(word => ({
           text: String(word).trim(),
-          value: Math.random() * 50 + 30, // Random size between 30 and 80
+          value: Math.random() * 60 + 40, // Random size between 40 and 100
         }));
       console.log('Processed words:', processed);
       setProcessedWords(processed);
@@ -107,15 +121,15 @@ export function WordCloud({ words }: WordCloudProps) {
   }
 
   return (
-    <div className="w-full h-[600px] flex items-center justify-center">
+    <div className="word-cloud-container w-full h-full min-h-[400px] flex items-center justify-center">
       <Cloud
         data={processedWords}
-        width={800}
-        height={600}
+        width={dimensions.width}
+        height={dimensions.height}
         font="Inter"
-        fontSize={(word) => word.value}
+        fontSize={(word) => Math.max(word.value, 20)} // Ensure minimum font size
         rotate={0}
-        padding={10}
+        padding={20}
         random={() => 0.5}
         fill={(word) => colors[Math.floor(Math.random() * colors.length)]}
       />

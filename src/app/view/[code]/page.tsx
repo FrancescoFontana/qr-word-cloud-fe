@@ -100,7 +100,7 @@ export default function ViewPage({ params }: PageProps) {
         <div className="container mx-auto relative">
           {/* Word Cloud */}
           <div 
-            className={`mb-8 aspect-video w-full transition-all duration-1000 rounded-2xl bg-black/40 p-8 shadow-2xl ${
+            className={`mb-8 w-full h-[600px] transition-all duration-1000 rounded-2xl bg-black/40 p-8 shadow-2xl ${
               isBlurred ? 'blur-xl' : ''
             }`}
           >

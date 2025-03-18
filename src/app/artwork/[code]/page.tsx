@@ -83,7 +83,7 @@ export default function ArtworkPage({ params }: PageProps) {
           isBlurred ? 'blur-xl opacity-40' : 'blur-0 opacity-100'
         }`}
       >
-        <div className="w-full h-full bg-black/40 p-8">
+        <div className="w-full h-screen bg-black/40 p-8">
           <WordCloud words={words} />
         </div>
       </div>
