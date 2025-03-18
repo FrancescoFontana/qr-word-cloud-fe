@@ -79,28 +79,28 @@ export default function ViewPage({ params }: PageProps) {
   }, [isInitialLoad]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       {/* Error Message */}
       {error && (
-        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-200 px-6 py-3 rounded-lg shadow-lg">
+        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-200 px-6 py-3 rounded-lg shadow-lg z-50">
           {error}
         </div>
       )}
 
       {/* Loading State */}
       {isLoading ? (
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="absolute inset-0 flex items-center justify-center z-30">
           <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 text-center shadow-2xl">
-            <p className="text-lg font-light animate-pulse text-white/90">
+            <p className="text-2xl font-light animate-pulse text-white">
               Loading word cloud...
             </p>
           </div>
         </div>
       ) : (
-        <div className="container mx-auto relative">
-          {/* Word Cloud */}
+        <div className="relative w-full h-screen">
+          {/* Word Cloud Container */}
           <div 
-            className={`mb-8 w-full h-[600px] transition-all duration-1000 rounded-2xl bg-black/40 p-8 shadow-2xl ${
+            className={`absolute inset-0 transition-all duration-1000 ${
               isBlurred ? 'blur-xl' : ''
             }`}
           >
@@ -109,12 +109,12 @@ export default function ViewPage({ params }: PageProps) {
 
           {/* QR Code Section */}
           {showQR && artworkUrl && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-500 rounded-2xl">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-500 z-40">
               <div className="flex flex-col items-center space-y-6">
                 <div className="bg-white p-6 rounded-xl transform hover:scale-105 transition-transform duration-300 shadow-2xl">
                   <QRCodeSVG value={artworkUrl} size={200} />
                 </div>
-                <p className="text-lg text-white/90 font-light tracking-wide">
+                <p className="text-2xl text-white font-light tracking-wide">
                   Scan to contribute to the artwork
                 </p>
               </div>

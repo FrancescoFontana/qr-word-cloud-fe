@@ -80,26 +80,24 @@ export default function ArtworkPage({ params }: PageProps) {
       {/* Background Word Cloud - Always visible but blurred until submission */}
       <div 
         className={`absolute inset-0 transition-all duration-1000 ${
-          isBlurred ? 'blur-xl opacity-40' : 'blur-0 opacity-100'
+          isBlurred ? 'blur-xl opacity-60' : 'blur-0 opacity-100'
         }`}
       >
-        <div className="w-full h-screen bg-black/40 p-8">
-          <WordCloud words={words} />
-        </div>
+        <WordCloud words={words} />
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-8">
+      <div className="relative z-40 min-h-screen flex flex-col items-center justify-center">
         {/* Error Message */}
         {error && (
-          <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-200 px-6 py-3 rounded-lg shadow-lg">
+          <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-200 px-6 py-3 rounded-lg shadow-lg z-50">
             {error}
           </div>
         )}
 
         {/* Input Form - Only visible before submission */}
         {!hasSubmitted && (
-          <div className="w-full max-w-md transform transition-all duration-500">
+          <div className="w-full max-w-md transform transition-all duration-500 px-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <input
                 type="text"
@@ -107,12 +105,12 @@ export default function ArtworkPage({ params }: PageProps) {
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Enter a word or short phrase..."
                 maxLength={50}
-                className="w-full px-6 py-4 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all duration-300 shadow-lg"
+                className="w-full px-6 py-4 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all duration-300 shadow-lg text-xl"
                 autoFocus
               />
               <button
                 type="submit"
-                className="w-full px-6 py-4 rounded-xl bg-white/15 backdrop-blur-md text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all duration-300 font-medium tracking-wide shadow-lg"
+                className="w-full px-6 py-4 rounded-xl bg-white/15 backdrop-blur-md text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all duration-300 font-medium tracking-wide shadow-lg text-xl"
               >
                 Add to Artwork
               </button>
@@ -124,7 +122,7 @@ export default function ArtworkPage({ params }: PageProps) {
         {hasSubmitted && (
           <div className="transform transition-all duration-500 opacity-0 animate-fade-out">
             <div className="bg-white/15 backdrop-blur-md rounded-xl p-6 text-white text-center shadow-lg">
-              <p className="text-lg font-light">
+              <p className="text-2xl font-light">
                 Word added to the artwork
               </p>
             </div>

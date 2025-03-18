@@ -34,7 +34,7 @@ const Cloud = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="text-white/80 text-lg animate-pulse-slow">
+      <div className="text-white text-2xl animate-pulse">
         Loading word cloud...
       </div>
     ),
@@ -48,35 +48,37 @@ interface WordCloudProps {
 export function WordCloud({ words }: WordCloudProps) {
   const [mounted, setMounted] = useState(false);
   const [processedWords, setProcessedWords] = useState<Word[]>([]);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 1920, height: 1080 });
 
-  // Array of vibrant colors for better visibility on dark background
+  // Array of high-contrast colors for better visibility on dark background
   const colors = [
-    '#FF69B4', // Hot Pink
-    '#00CED1', // Dark Turquoise
+    '#FF1493', // Deep Pink
+    '#00FF00', // Lime
     '#FFD700', // Gold
-    '#FF6347', // Tomato
-    '#32CD32', // Lime Green
-    '#BA55D3', // Medium Orchid
-    '#00BFFF', // Deep Sky Blue
-    '#FFA500', // Orange
-    '#9370DB', // Medium Purple
-    '#7FFFD4', // Aquamarine
+    '#FF4500', // Orange Red
+    '#00FFFF', // Cyan
+    '#FF00FF', // Magenta
+    '#FFFF00', // Yellow
+    '#1E90FF', // Dodger Blue
+    '#FF69B4', // Hot Pink
+    '#7FFF00', // Chartreuse
   ];
 
   useEffect(() => {
     setMounted(true);
     
-    // Update dimensions based on container size
+    // Update dimensions based on window size
     const updateDimensions = () => {
-      const container = document.querySelector('.word-cloud-container');
-      if (container) {
-        const { width, height } = container.getBoundingClientRect();
-        setDimensions({ width, height });
-      }
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
     };
 
+    // Initial update
     updateDimensions();
+
+    // Update on resize
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
@@ -89,12 +91,12 @@ export function WordCloud({ words }: WordCloudProps) {
     }
 
     try {
-      // Convert string array to Word objects with random sizes
+      // Convert string array to Word objects with larger sizes
       const processed = words
         .filter(word => typeof word === 'string' && word.trim().length > 0)
         .map(word => ({
           text: String(word).trim(),
-          value: Math.random() * 60 + 40, // Random size between 40 and 100
+          value: Math.random() * 80 + 60, // Random size between 60 and 140
         }));
       console.log('Processed words:', processed);
       setProcessedWords(processed);
@@ -106,7 +108,7 @@ export function WordCloud({ words }: WordCloudProps) {
 
   if (!mounted) {
     return (
-      <div className="text-white/80 text-lg animate-pulse-slow">
+      <div className="text-white text-2xl animate-pulse">
         Loading word cloud...
       </div>
     );
@@ -114,22 +116,22 @@ export function WordCloud({ words }: WordCloudProps) {
 
   if (processedWords.length === 0) {
     return (
-      <div className="text-white/80 text-lg animate-pulse-slow">
+      <div className="text-white text-2xl animate-pulse">
         No words yet
       </div>
     );
   }
 
   return (
-    <div className="word-cloud-container w-full h-full min-h-[400px] flex items-center justify-center">
+    <div className="word-cloud-container absolute inset-0 flex items-center justify-center overflow-hidden">
       <Cloud
         data={processedWords}
         width={dimensions.width}
         height={dimensions.height}
         font="Inter"
-        fontSize={(word) => Math.max(word.value, 20)} // Ensure minimum font size
+        fontSize={(word) => Math.max(word.value, 40)} // Ensure minimum font size of 40
         rotate={0}
-        padding={20}
+        padding={30}
         random={() => 0.5}
         fill={(word) => colors[Math.floor(Math.random() * colors.length)]}
       />
