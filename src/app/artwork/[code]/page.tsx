@@ -79,7 +79,7 @@ export default function ArtworkPage({ params }: PageProps) {
     <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Background Word Cloud - Always visible but blurred until submission */}
       <div 
-        className={`absolute inset-0 transition-all duration-1000 ${
+        className={`fixed inset-0 w-full h-screen transition-all duration-1000 ${
           isBlurred ? 'blur-xl opacity-60' : 'blur-0 opacity-100'
         }`}
       >

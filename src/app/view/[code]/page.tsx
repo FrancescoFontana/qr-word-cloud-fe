@@ -100,7 +100,7 @@ export default function ViewPage({ params }: PageProps) {
         <div className="relative w-full h-screen">
           {/* Word Cloud Container */}
           <div 
-            className={`absolute inset-0 transition-all duration-1000 ${
+            className={`fixed inset-0 w-full h-screen transition-all duration-1000 ${
               isBlurred ? 'blur-xl' : ''
             }`}
           >

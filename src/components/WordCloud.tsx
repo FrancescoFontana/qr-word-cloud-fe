@@ -69,10 +69,10 @@ export function WordCloud({ words }: WordCloudProps) {
     
     // Update dimensions based on window size
     const updateDimensions = () => {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      console.log('Setting dimensions:', { width, height });
+      setDimensions({ width, height });
     };
 
     // Initial update
@@ -123,13 +123,13 @@ export function WordCloud({ words }: WordCloudProps) {
   }
 
   return (
-    <div className="word-cloud-container absolute inset-0 flex items-center justify-center overflow-hidden">
+    <div className="absolute inset-0">
       <Cloud
         data={processedWords}
         width={dimensions.width}
         height={dimensions.height}
         font="Inter"
-        fontSize={(word) => Math.max(word.value, 40)} // Ensure minimum font size of 40
+        fontSize={(word) => Math.max(word.value, 40)}
         rotate={0}
         padding={30}
         random={() => 0.5}
