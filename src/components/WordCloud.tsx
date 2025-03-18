@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import type { ComponentType } from 'react';
 
 interface Word {
   text: string;
@@ -21,20 +20,14 @@ interface CloudProps {
 }
 
 // Dynamically import the Cloud component with SSR disabled
-const Cloud = dynamic(
-  () => import('react-d3-cloud').then((mod) => {
-    console.log('Module loaded:', mod);
-    return mod.default as ComponentType<CloudProps>;
-  }),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="text-white/80 text-lg animate-pulse-slow">
-        Loading word cloud...
-      </div>
-    ),
-  }
-);
+const Cloud = dynamic(() => import('react-d3-cloud').then((mod) => mod.default), {
+  ssr: false,
+  loading: () => (
+    <div className="text-white/80 text-lg animate-pulse-slow">
+      Loading word cloud...
+    </div>
+  ),
+});
 
 interface WordCloudProps {
   words: string[];
@@ -89,18 +82,16 @@ export function WordCloud({ words }: WordCloudProps) {
 
   return (
     <div className="w-full h-[600px] flex items-center justify-center">
-      {mounted && (
-        <Cloud
-          data={processedWords}
-          width={800}
-          height={600}
-          font="Inter"
-          fontSize={(word: Word) => word.value}
-          rotate={0}
-          padding={5}
-          random={() => 0.5}
-        />
-      )}
+      <Cloud
+        data={processedWords}
+        width={800}
+        height={600}
+        font="Inter"
+        fontSize={(word) => word.value}
+        rotate={0}
+        padding={5}
+        random={() => 0.5}
+      />
     </div>
   );
 } 
