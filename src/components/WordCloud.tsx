@@ -35,7 +35,7 @@ const Cloud = dynamic(
     ssr: false,
     loading: () => (
       <div className="text-white text-2xl animate-pulse">
-        Loading word cloud...
+        Caricamento nuvola di parole...
       </div>
     ),
   }
@@ -49,6 +49,7 @@ export function WordCloud({ words }: WordCloudProps) {
   const [mounted, setMounted] = useState(false);
   const [processedWords, setProcessedWords] = useState<Word[]>([]);
   const [dimensions, setDimensions] = useState({ width: 1920, height: 1080 });
+  const [fontLoaded, setFontLoaded] = useState(false);
 
   // Modern, elegant color palette
   const colors = [
@@ -81,6 +82,14 @@ export function WordCloud({ words }: WordCloudProps) {
     // Update on resize
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  useEffect(() => {
+    // Check if font is loaded
+    document.fonts.ready.then(() => {
+      console.log('Fonts loaded');
+      setFontLoaded(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -119,10 +128,10 @@ export function WordCloud({ words }: WordCloudProps) {
     }
   }, [words]);
 
-  if (!mounted) {
+  if (!mounted || !fontLoaded) {
     return (
       <div className="text-white text-2xl animate-pulse">
-        Caricamento Cloudwall...
+        Caricamento nuvola di parole...
       </div>
     );
   }
@@ -130,7 +139,7 @@ export function WordCloud({ words }: WordCloudProps) {
   if (processedWords.length === 0) {
     return (
       <div className="text-white text-2xl animate-pulse">
-        In attesa...
+        Nessuna parola ancora
       </div>
     );
   }
@@ -141,14 +150,13 @@ export function WordCloud({ words }: WordCloudProps) {
         data={processedWords}
         width={dimensions.width}
         height={dimensions.height}
-        font="Playfair Display"
+        font="var(--font-titillium)"
         fontSize={(word) => word.value}
         rotate={0}
-        padding={20} // Reduced padding for mobile
+        padding={20}
         random={() => 0.5}
         fill={(word) => {
-          // Use more muted colors for smaller words, brighter for larger ones
-          const normalizedSize = (word.value - 16) / (100 - 16); // 0 to 1
+          const normalizedSize = (word.value - 16) / (100 - 16);
           const colorIndex = Math.floor(normalizedSize * (colors.length - 1));
           return colors[colorIndex];
         }}

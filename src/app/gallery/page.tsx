@@ -11,7 +11,7 @@ interface WordsResponse {
 
 type WebSocketMessage = {
   type: 'join_artwork' | 'update_cloud' | 'error';
-  code?: string;
+  artworkCode?: string;
   words?: string[];
   message?: string;
 };
@@ -23,6 +23,15 @@ export default function GalleryPage() {
   const [visibleQRs, setVisibleQRs] = useState<{ [key: string]: boolean }>({});
   const [websockets, setWebsockets] = useState<{ [key: string]: WebSocket }>({});
   const [wordClouds, setWordClouds] = useState<{ [key: string]: string[] }>({});
+  const [fontLoaded, setFontLoaded] = useState(false);
+
+  useEffect(() => {
+    // Check if font is loaded
+    document.fonts.ready.then(() => {
+      console.log('Fonts loaded');
+      setFontLoaded(true);
+    });
+  }, []);
 
   useEffect(() => {
     const fetchCodes = async () => {
@@ -57,7 +66,7 @@ export default function GalleryPage() {
       
       ws.onopen = () => {
         console.log(`WebSocket connected for code ${code}`);
-        ws.send(JSON.stringify({ type: 'join_artwork', code }));
+        ws.send(JSON.stringify({ type: 'join_artwork', artworkCode: code }));
       };
 
       ws.onmessage = (event) => {
@@ -117,7 +126,7 @@ export default function GalleryPage() {
     }, 3000);
   };
 
-  if (loading) {
+  if (loading || !fontLoaded) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white text-2xl animate-pulse">
@@ -140,10 +149,10 @@ export default function GalleryPage() {
   return (
     <div className="min-h-screen bg-black p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-white text-4xl font-bold mb-8 text-center">
-          Galleria delle Nuvole di Parole
+        <h1 className="text-white text-4xl font-bold mb-4 text-center">
+          "Leave a word in the clouds"
         </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {Object.entries(codes).map(([code, words]) => (
             <div key={code} className="relative aspect-square bg-black/30 backdrop-blur-sm rounded-2xl overflow-hidden">
               {visibleQRs[code] ? (
@@ -168,6 +177,9 @@ export default function GalleryPage() {
             </div>
           ))}
         </div>
+        <p className="text-white/80 text-center text-lg max-w-2xl mx-auto">
+          Scansiona il codice QR di ogni opera per contribuire con le tue parole. Le parole appariranno nella nuvola in tempo reale, creando un'opera d'arte collaborativa e in continua evoluzione.
+        </p>
       </div>
     </div>
   );
