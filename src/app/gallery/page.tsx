@@ -24,6 +24,7 @@ export default function GalleryPage() {
   const [websockets, setWebsockets] = useState<{ [key: string]: WebSocket }>({});
   const [wordClouds, setWordClouds] = useState<{ [key: string]: string[] }>({});
   const [fontLoaded, setFontLoaded] = useState(false);
+  const [blurredClouds, setBlurredClouds] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     // Check if font is loaded
@@ -48,6 +49,8 @@ export default function GalleryPage() {
           return acc;
         }, {});
         setVisibleQRs(initialVisible);
+        // Initialize blurred state for all clouds
+        setBlurredClouds(initialVisible);
       } catch (err) {
         setError('Errore nel caricamento dei codici');
         console.error('Error fetching codes:', err);
@@ -80,6 +83,26 @@ export default function GalleryPage() {
                 ...prev,
                 [code]: message.words || []
               }));
+              // Show word cloud and hide QR code
+              setVisibleQRs(prev => ({
+                ...prev,
+                [code]: false
+              }));
+              setBlurredClouds(prev => ({
+                ...prev,
+                [code]: false
+              }));
+              // After 3 seconds, show QR code and blur word cloud
+              setTimeout(() => {
+                setVisibleQRs(prev => ({
+                  ...prev,
+                  [code]: true
+                }));
+                setBlurredClouds(prev => ({
+                  ...prev,
+                  [code]: true
+                }));
+              }, 3000);
             }
             break;
           case 'error':
@@ -117,9 +140,17 @@ export default function GalleryPage() {
       ...prev,
       [code]: false
     }));
+    setBlurredClouds(prev => ({
+      ...prev,
+      [code]: false
+    }));
 
     setTimeout(() => {
       setVisibleQRs(prev => ({
+        ...prev,
+        [code]: true
+      }));
+      setBlurredClouds(prev => ({
         ...prev,
         [code]: true
       }));
@@ -155,7 +186,10 @@ export default function GalleryPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {Object.entries(codes).map(([code, words]) => (
             <div key={code} className="relative aspect-square bg-black/30 backdrop-blur-sm rounded-2xl overflow-hidden">
-              {visibleQRs[code] ? (
+              <div className={`absolute inset-0 transition-all duration-300 ${blurredClouds[code] ? 'blur-xl' : ''}`}>
+                <WordCloud words={wordClouds[code] || words} />
+              </div>
+              {visibleQRs[code] && (
                 <div 
                   className="absolute inset-0 flex items-center justify-center cursor-pointer transition-opacity duration-300"
                   onClick={() => handleQRClick(code)}
@@ -168,10 +202,6 @@ export default function GalleryPage() {
                       includeMargin={true}
                     />
                   </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0">
-                  <WordCloud words={wordClouds[code] || words} />
                 </div>
               )}
             </div>
