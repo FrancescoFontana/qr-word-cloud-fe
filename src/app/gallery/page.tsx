@@ -9,6 +9,13 @@ interface WordsResponse {
   [code: string]: string[];
 }
 
+type WebSocketMessage = {
+  type: 'join_artwork' | 'update_cloud' | 'error';
+  code?: string;
+  words?: string[];
+  message?: string;
+};
+
 export default function GalleryPage() {
   const [codes, setCodes] = useState<WordsResponse>({});
   const [loading, setLoading] = useState(true);
@@ -50,16 +57,27 @@ export default function GalleryPage() {
       
       ws.onopen = () => {
         console.log(`WebSocket connected for code ${code}`);
-        ws.send(JSON.stringify({ type: 'join', code }));
+        ws.send(JSON.stringify({ type: 'join_artwork', code }));
       };
 
       ws.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        if (message.type === 'update_cloud' && Array.isArray(message.words)) {
-          setWordClouds(prev => ({
-            ...prev,
-            [code]: message.words
-          }));
+        const message: WebSocketMessage = JSON.parse(event.data);
+        console.log('Received message:', message);
+
+        switch (message.type) {
+          case 'update_cloud':
+            if (message.words && Array.isArray(message.words)) {
+              setWordClouds(prev => ({
+                ...prev,
+                [code]: message.words || []
+              }));
+            }
+            break;
+          case 'error':
+            console.error(`WebSocket error for code ${code}:`, message.message);
+            break;
+          default:
+            console.log(`Received unknown message type: ${message.type}`);
         }
       };
 
