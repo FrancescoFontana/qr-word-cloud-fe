@@ -95,7 +95,7 @@ export default function ViewPage({ params }: PageProps) {
         {showQR && artworkUrl && (
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 md:p-8 w-full max-w-md mx-auto mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-center">
-              Scan to Add Words
+              Scansiona per aggiungere parole
             </h1>
             <div className="flex justify-center mb-4 sm:mb-6">
               <div className="bg-white p-2 sm:p-3 rounded-lg">
@@ -103,7 +103,7 @@ export default function ViewPage({ params }: PageProps) {
               </div>
             </div>
             <p className="text-sm sm:text-base text-center text-gray-300">
-              Scan this QR code with your phone to add words to the cloud
+              Scansiona questo codice QR con il tuo telefono per aggiungere parole
             </p>
           </div>
         )}

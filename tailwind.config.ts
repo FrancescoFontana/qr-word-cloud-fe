@@ -10,6 +10,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
+        titillium: ['var(--font-titillium)'],
       },
       animation: {
         'gradient': 'gradient 8s linear infinite',

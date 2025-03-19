@@ -122,7 +122,7 @@ export function WordCloud({ words }: WordCloudProps) {
   if (!mounted) {
     return (
       <div className="text-white text-2xl animate-pulse">
-        Loading word cloud...
+        Caricamento word cloud...
       </div>
     );
   }
@@ -130,7 +130,7 @@ export function WordCloud({ words }: WordCloudProps) {
   if (processedWords.length === 0) {
     return (
       <div className="text-white text-2xl animate-pulse">
-        No words yet
+        In attesa...
       </div>
     );
   }
@@ -141,14 +141,13 @@ export function WordCloud({ words }: WordCloudProps) {
         data={processedWords}
         width={dimensions.width}
         height={dimensions.height}
-        font="Playfair Display"
+        font="Titillium Web"
         fontSize={(word) => word.value}
         rotate={0}
-        padding={20} // Reduced padding for mobile
+        padding={20}
         random={() => 0.5}
         fill={(word) => {
-          // Use more muted colors for smaller words, brighter for larger ones
-          const normalizedSize = (word.value - 16) / (100 - 16); // 0 to 1
+          const normalizedSize = (word.value - 16) / (100 - 16);
           const colorIndex = Math.floor(normalizedSize * (colors.length - 1));
           return colors[colorIndex];
         }}

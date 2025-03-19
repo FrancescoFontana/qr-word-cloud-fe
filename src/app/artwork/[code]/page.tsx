@@ -97,7 +97,7 @@ export default function ArtworkPage({ params }: PageProps) {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Enter a word or short sentence..."
+                  placeholder="Inserisci una parola o una breve frase..."
                   className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 text-base sm:text-lg"
                   maxLength={50}
                 />
@@ -109,7 +109,7 @@ export default function ArtworkPage({ params }: PageProps) {
                 type="submit"
                 className="w-full px-6 py-3 sm:py-4 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-xl text-white font-medium transition-colors duration-200 text-base sm:text-lg"
               >
-                Add to Cloud
+                Aggiungi
               </button>
             </form>
           </div>
@@ -119,10 +119,10 @@ export default function ArtworkPage({ params }: PageProps) {
         {hasSubmitted && (
           <div className="text-center space-y-4 sm:space-y-6 animate-fade-out">
             <p className="text-xl sm:text-2xl md:text-3xl font-light text-white">
-              Thank you for your contribution
+              Grazie per il tuo Contributo
             </p>
             <p className="text-sm sm:text-base text-gray-300">
-              Your word has been added to the cloud
+              La tua parola è stata aggiunta
             </p>
           </div>
         )}
