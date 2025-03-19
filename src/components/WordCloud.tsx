@@ -35,7 +35,7 @@ const Cloud = dynamic(
     ssr: false,
     loading: () => (
       <div className="text-white text-2xl animate-pulse">
-        Loading word cloud...
+        Caricamento nuvola di parole...
       </div>
     ),
   }
@@ -49,6 +49,7 @@ export function WordCloud({ words }: WordCloudProps) {
   const [mounted, setMounted] = useState(false);
   const [processedWords, setProcessedWords] = useState<Word[]>([]);
   const [dimensions, setDimensions] = useState({ width: 1920, height: 1080 });
+  const [fontLoaded, setFontLoaded] = useState(false);
 
   // Modern, elegant color palette
   const colors = [
@@ -66,6 +67,20 @@ export function WordCloud({ words }: WordCloudProps) {
 
   useEffect(() => {
     setMounted(true);
+    
+    // Load the Titillium Web font
+    const loadFont = async () => {
+      try {
+        const font = new FontFace('Titillium Web', 'url(https://fonts.gstatic.com/s/titilliumweb/v17/NaPecZTIAOhVxoMyOr9n_E7fdMPmCA.ttf)');
+        await font.load();
+        document.fonts.add(font);
+        setFontLoaded(true);
+      } catch (error) {
+        console.error('Error loading font:', error);
+      }
+    };
+
+    loadFont();
     
     // Update dimensions based on window size
     const updateDimensions = () => {
@@ -119,10 +134,10 @@ export function WordCloud({ words }: WordCloudProps) {
     }
   }, [words]);
 
-  if (!mounted) {
+  if (!mounted || !fontLoaded) {
     return (
       <div className="text-white text-2xl animate-pulse">
-        Caricamento word cloud...
+        Caricamento nuvola di parole...
       </div>
     );
   }
@@ -130,7 +145,7 @@ export function WordCloud({ words }: WordCloudProps) {
   if (processedWords.length === 0) {
     return (
       <div className="text-white text-2xl animate-pulse">
-        In attesa...
+        Nessuna parola ancora
       </div>
     );
   }
