@@ -10,7 +10,7 @@ interface WordsResponse {
 }
 
 type WebSocketMessage = {
-  type: 'join_artwork' | 'update_cloud' | 'error';
+  type: 'join_artwork' | 'update_cloud' | 'error' | 'new_artwork';
   artworkCode?: string;
   words?: string[];
   message?: string;
@@ -63,77 +63,56 @@ export default function GalleryPage() {
   }, []);
 
   useEffect(() => {
-    // Initialize WebSocket connections for each code
-    Object.keys(codes).forEach((code) => {
-      const ws = new WebSocket('wss://qr-word-cloud-be.onrender.com/ws');
-      
-      ws.onopen = () => {
-        console.log(`WebSocket connected for code ${code}`);
-        ws.send(JSON.stringify({ type: 'join_artwork', artworkCode: code }));
-      };
-
-      ws.onmessage = (event) => {
-        const message: WebSocketMessage = JSON.parse(event.data);
-        console.log('Received message:', message);
-
-        switch (message.type) {
-          case 'update_cloud':
-            if (message.words && Array.isArray(message.words)) {
-              setWordClouds(prev => ({
-                ...prev,
-                [code]: message.words || []
-              }));
-              // Show word cloud and hide QR code
-              setVisibleQRs(prev => ({
-                ...prev,
-                [code]: false
-              }));
-              setBlurredClouds(prev => ({
-                ...prev,
-                [code]: false
-              }));
-              // After 3 seconds, show QR code and blur word cloud
-              setTimeout(() => {
-                setVisibleQRs(prev => ({
-                  ...prev,
-                  [code]: true
-                }));
-                setBlurredClouds(prev => ({
-                  ...prev,
-                  [code]: true
-                }));
-              }, 3000);
-            }
-            break;
-          case 'error':
-            console.error(`WebSocket error for code ${code}:`, message.message);
-            break;
-          default:
-            console.log(`Received unknown message type: ${message.type}`);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error(`WebSocket error for code ${code}:`, error);
-      };
-
-      ws.onclose = () => {
-        console.log(`WebSocket closed for code ${code}`);
-      };
-
-      setWebsockets(prev => ({
-        ...prev,
-        [code]: ws
-      }));
-    });
-
-    // Cleanup WebSocket connections
-    return () => {
-      Object.values(websockets).forEach(ws => {
-        ws.close();
-      });
+    // Initialize WebSocket connection for new artworks
+    const ws = new WebSocket('wss://qr-word-cloud-be.onrender.com/ws');
+    
+    ws.onopen = () => {
+      console.log('WebSocket connected for gallery');
+      ws.send(JSON.stringify({ type: 'join_gallery' }));
     };
-  }, [codes]);
+
+    ws.onmessage = (event) => {
+      const message: WebSocketMessage = JSON.parse(event.data);
+      console.log('Received message:', message);
+
+      switch (message.type) {
+        case 'new_artwork':
+          if (message.artworkCode && message.words) {
+            const code = message.artworkCode;
+            setCodes(prev => ({
+              ...prev,
+              [code]: message.words || []
+            }));
+            setVisibleQRs(prev => ({
+              ...prev,
+              [code]: true
+            }));
+            setBlurredClouds(prev => ({
+              ...prev,
+              [code]: true
+            }));
+          }
+          break;
+        case 'error':
+          console.error('WebSocket error:', message.message);
+          break;
+        default:
+          console.log(`Received unknown message type: ${message.type}`);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket closed');
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   const handleQRClick = (code: string) => {
     setVisibleQRs(prev => ({
@@ -183,9 +162,9 @@ export default function GalleryPage() {
         <h1 className="text-white text-4xl font-bold mb-4 text-center">
           "Leave a word in the clouds"
         </h1>
-        <div className="flex flex-col gap-8 mb-12">
+        <div className="flex flex-row gap-8 mb-12 overflow-x-auto pb-8">
           {Object.entries(codes).map(([code, words]) => (
-            <div key={code} className="relative w-full h-[60vh] bg-black/30 backdrop-blur-sm rounded-2xl overflow-hidden">
+            <div key={code} className="relative w-[400px] h-[400px] bg-black/30 backdrop-blur-sm rounded-2xl overflow-hidden flex-shrink-0">
               <div className={`absolute inset-0 transition-all duration-500 ${blurredClouds[code] ? 'blur-xl' : ''}`}>
                 <WordCloud words={wordClouds[code] || words} />
               </div>
@@ -195,7 +174,7 @@ export default function GalleryPage() {
                 }`}
                 onClick={() => handleQRClick(code)}
               >
-                <div className="bg-white p-4 rounded-2xl">
+                <div className="bg-black/30 backdrop-blur-sm p-8 rounded-2xl border border-white/10">
                   <QRCodeSVG
                     value={`https://qr-word-cloud-fe.vercel.app/view/${code}`}
                     size={300}

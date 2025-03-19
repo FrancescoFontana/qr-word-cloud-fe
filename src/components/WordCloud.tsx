@@ -101,8 +101,8 @@ export function WordCloud({ words }: WordCloudProps) {
     <div className="w-full h-full">
       <Cloud
         data={processedWords}
-        width={800}
-        height={600}
+        width={400}
+        height={400}
         font="Titillium Web"
         fontSize={(word) => word.value}
         rotate={0}
