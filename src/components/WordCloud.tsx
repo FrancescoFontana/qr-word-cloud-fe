@@ -12,7 +12,7 @@ interface WordCloudProps {
   words: string[];
 }
 
-export default function WordCloud({ words }: WordCloudProps) {
+export function WordCloud({ words }: WordCloudProps) {
   const [mounted, setMounted] = useState(false);
   const [processedWords, setProcessedWords] = useState<Word[]>([]);
   const [fontLoaded, setFontLoaded] = useState(false);
