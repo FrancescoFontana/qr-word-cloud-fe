@@ -153,7 +153,7 @@ export function WordCloud({ words }: WordCloudProps) {
         font="var(--font-titillium)"
         fontSize={(word) => word.value}
         rotate={0}
-        padding={20}
+        padding={40}
         random={() => 0.5}
         fill={(word) => {
           const normalizedSize = (word.value - 16) / (100 - 16);

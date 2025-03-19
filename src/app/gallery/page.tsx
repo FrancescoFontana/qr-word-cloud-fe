@@ -183,27 +183,27 @@ export default function GalleryPage() {
         <h1 className="text-white text-4xl font-bold mb-4 text-center">
           "Leave a word in the clouds"
         </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <div className="flex flex-col gap-8 mb-12">
           {Object.entries(codes).map(([code, words]) => (
-            <div key={code} className="relative aspect-square bg-black/30 backdrop-blur-sm rounded-2xl overflow-hidden">
-              <div className={`absolute inset-0 transition-all duration-300 ${blurredClouds[code] ? 'blur-xl' : ''}`}>
+            <div key={code} className="relative w-full h-[60vh] bg-black/30 backdrop-blur-sm rounded-2xl overflow-hidden">
+              <div className={`absolute inset-0 transition-all duration-500 ${blurredClouds[code] ? 'blur-xl' : ''}`}>
                 <WordCloud words={wordClouds[code] || words} />
               </div>
-              {visibleQRs[code] && (
-                <div 
-                  className="absolute inset-0 flex items-center justify-center cursor-pointer transition-opacity duration-300"
-                  onClick={() => handleQRClick(code)}
-                >
-                  <div className="bg-white p-4 rounded-2xl">
-                    <QRCodeSVG
-                      value={`https://qr-word-cloud-fe.vercel.app/view/${code}`}
-                      size={200}
-                      level="H"
-                      includeMargin={true}
-                    />
-                  </div>
+              <div 
+                className={`absolute inset-0 flex items-center justify-center cursor-pointer transition-all duration-500 ${
+                  visibleQRs[code] ? 'opacity-100' : 'opacity-0'
+                }`}
+                onClick={() => handleQRClick(code)}
+              >
+                <div className="bg-white p-4 rounded-2xl">
+                  <QRCodeSVG
+                    value={`https://qr-word-cloud-fe.vercel.app/view/${code}`}
+                    size={300}
+                    level="H"
+                    includeMargin={true}
+                  />
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </div>
