@@ -122,7 +122,7 @@ export default function ArtworkPage({ params }: PageProps) {
               Grazie per il tuo Contributo
             </p>
             <p className="text-sm sm:text-base text-gray-300">
-              La tua parola è stata aggiunta
+              La tua parola è stata aggiunta nel Cloudwall
             </p>
           </div>
         )}
