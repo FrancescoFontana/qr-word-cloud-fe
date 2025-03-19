@@ -1,12 +1,8 @@
 import type { Metadata } from 'next';
-import { Inter, Titillium_Web } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 
-const titillium = Titillium_Web({
-  subsets: ['latin'],
-  weight: ['200', '300', '400', '600', '700', '900'],
-  variable: '--font-titillium',
-});
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'QR Word Cloud',
@@ -23,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${titillium.variable} font-titillium`}>{children}</body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
