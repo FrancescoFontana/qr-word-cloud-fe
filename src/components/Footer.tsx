@@ -16,9 +16,6 @@ export function Footer() {
         />
         <span>The Grid Company</span>
       </div>
-      <p className="text-white/50 text-sm mt-2">
-        © 2024 Unveiling Lights. All rights reserved.
-      </p>
     </footer>
   );
 } 
