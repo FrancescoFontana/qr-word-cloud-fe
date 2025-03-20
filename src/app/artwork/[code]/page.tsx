@@ -164,7 +164,7 @@ export default function ArtworkPage() {
             <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${showInput ? 'opacity-100' : 'opacity-0'}`}>
               <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
                 <h1 className="text-3xl font-bold mb-6 text-center">
-                  Add a word to the cloud
+                  Lascia una parola o un concetto
                 </h1>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
@@ -172,7 +172,7 @@ export default function ArtworkPage() {
                       type="text"
                       value={inputWord}
                       onChange={(e) => setInputWord(e.target.value)}
-                      placeholder="Enter a word..."
+                      placeholder="Inserisci qui"
                       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
                       disabled={isSubmitting}
                     />
@@ -182,7 +182,7 @@ export default function ArtworkPage() {
                     disabled={!inputWord.trim() || isSubmitting}
                     className="w-full px-4 py-3 bg-white text-black rounded-lg font-medium hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? 'Adding...' : 'Add Word'}
+                    {isSubmitting ? 'Adding...' : 'Invia al CloudWall'}
                   </button>
                 </form>
               </div>
