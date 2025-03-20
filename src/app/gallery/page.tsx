@@ -29,7 +29,9 @@ interface ApiResponse {
 interface WebSocketMessage {
   type: string;
   artworkCode: string;
-  codes: string[];
+  words?: string[];
+  newWord?: string;
+  codes?: string[];
 }
 
 export default function GalleryPage() {
@@ -100,14 +102,27 @@ export default function GalleryPage() {
         
         switch (data.type) {
           case 'update_cloud':
-            if (data.artworkCode) {
+            if (data.artworkCode && data.words) {
               console.log('📊 [GalleryPage] Processing word update for code:', data.artworkCode);
+              
+              // Convert words array to Word array
+              const wordMap = new Map<string, number>();
+              data.words.forEach(word => {
+                const normalizedWord = word.toLowerCase();
+                wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
+              });
+              
+              const wordArray: Word[] = Array.from(wordMap.entries()).map(([text, value]) => ({
+                text,
+                value
+              }));
               
               // First, update the words and hide QR code
               setArtworks(prev => ({
                 ...prev,
                 [data.artworkCode]: {
                   ...prev[data.artworkCode],
+                  words: wordArray,
                   isBlurred: false,
                   showQR: false
                 }
@@ -139,6 +154,8 @@ export default function GalleryPage() {
                   showQR: true
                 }
               }));
+              // Connect to the new artwork's WebSocket
+              wsService.connect(data.artworkCode, false);
             }
             break;
 
@@ -176,11 +193,11 @@ export default function GalleryPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      <main className="pt-16 pb-20">
+      <main className="flex-1 flex items-center justify-center py-16">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="flex flex-nowrap overflow-x-auto gap-8 pb-4">
             {Object.entries(artworks).map(([code, artwork]) => (
-              <div key={code} className="relative aspect-square bg-black/30 rounded-2xl overflow-hidden">
+              <div key={code} className="relative flex-none w-[300px] aspect-square bg-black/30 rounded-2xl overflow-hidden">
                 <div className="absolute inset-0">
                   <WordCloud words={artwork.words} isBlurred={artwork.isBlurred} />
                 </div>
