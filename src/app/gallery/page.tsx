@@ -25,6 +25,7 @@ export default function GalleryPage() {
   const [wordClouds, setWordClouds] = useState<{ [key: string]: string[] }>({});
   const [fontLoaded, setFontLoaded] = useState(false);
   const [blurredClouds, setBlurredClouds] = useState<{ [key: string]: boolean }>({});
+  const [galleryWs, setGalleryWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
     // Check if font is loaded
@@ -62,8 +63,8 @@ export default function GalleryPage() {
     fetchCodes();
   }, []);
 
+  // Initialize WebSocket connection for new artworks
   useEffect(() => {
-    // Initialize WebSocket connection for new artworks
     const ws = new WebSocket('wss://qr-word-cloud-be.onrender.com/ws');
     
     ws.onopen = () => {
@@ -73,7 +74,7 @@ export default function GalleryPage() {
 
     ws.onmessage = (event) => {
       const message: WebSocketMessage = JSON.parse(event.data);
-      console.log('Received message:', message);
+      console.log('Received gallery message:', message);
 
       switch (message.type) {
         case 'new_artwork':
@@ -94,25 +95,106 @@ export default function GalleryPage() {
           }
           break;
         case 'error':
-          console.error('WebSocket error:', message.message);
+          console.error('Gallery WebSocket error:', message.message);
           break;
         default:
-          console.log(`Received unknown message type: ${message.type}`);
+          console.log(`Received unknown gallery message type: ${message.type}`);
       }
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error('Gallery WebSocket error:', error);
     };
 
     ws.onclose = () => {
-      console.log('WebSocket closed');
+      console.log('Gallery WebSocket closed');
     };
+
+    setGalleryWs(ws);
 
     return () => {
       ws.close();
     };
   }, []);
+
+  // Initialize WebSocket connections for each artwork
+  useEffect(() => {
+    // Close existing connections
+    Object.values(websockets).forEach(ws => {
+      ws.close();
+    });
+
+    // Create new connections for each code
+    Object.keys(codes).forEach((code) => {
+      const ws = new WebSocket('wss://qr-word-cloud-be.onrender.com/ws');
+      
+      ws.onopen = () => {
+        console.log(`WebSocket connected for artwork ${code}`);
+        ws.send(JSON.stringify({ type: 'join_artwork', artworkCode: code }));
+      };
+
+      ws.onmessage = (event) => {
+        const message: WebSocketMessage = JSON.parse(event.data);
+        console.log(`Received message for artwork ${code}:`, message);
+
+        switch (message.type) {
+          case 'update_cloud':
+            if (message.words && Array.isArray(message.words)) {
+              setWordClouds(prev => ({
+                ...prev,
+                [code]: message.words || []
+              }));
+              // Show word cloud and hide QR code
+              setVisibleQRs(prev => ({
+                ...prev,
+                [code]: false
+              }));
+              setBlurredClouds(prev => ({
+                ...prev,
+                [code]: false
+              }));
+              // After 3 seconds, show QR code and blur word cloud
+              setTimeout(() => {
+                setVisibleQRs(prev => ({
+                  ...prev,
+                  [code]: true
+                }));
+                setBlurredClouds(prev => ({
+                  ...prev,
+                  [code]: true
+                }));
+              }, 3000);
+            }
+            break;
+          case 'error':
+            console.error(`WebSocket error for artwork ${code}:`, message.message);
+            break;
+          default:
+            console.log(`Received unknown message type for artwork ${code}: ${message.type}`);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error(`WebSocket error for artwork ${code}:`, error);
+      };
+
+      ws.onclose = () => {
+        console.log(`WebSocket closed for artwork ${code}`);
+      };
+
+      setWebsockets(prev => ({
+        ...prev,
+        [code]: ws
+      }));
+    });
+
+    // Cleanup WebSocket connections
+    return () => {
+      Object.values(websockets).forEach(ws => {
+        ws.close();
+      });
+    };
+  }, [codes]);
 
   const handleQRClick = (code: string) => {
     setVisibleQRs(prev => ({
