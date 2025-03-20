@@ -33,7 +33,7 @@ export default function ArtworkPage() {
   const [showInput, setShowInput] = useState(true);
 
   useEffect(() => {
-    console.log('🔵 [ArtworkPage] Initializing with code:', code);
+    console.log('🔵 [ArtworkPage] Initializing');
 
     // Load font
     document.fonts.load('1em "Titillium Web"').then(() => {
@@ -41,38 +41,8 @@ export default function ArtworkPage() {
       setFontLoaded(true);
     });
 
-    // Fetch initial words
-    const fetchWords = async () => {
-      try {
-        console.log('🔵 [ArtworkPage] Fetching initial words');
-        const response = await fetch(`/api/words/${code}`);
-        if (!response.ok) throw new Error('Failed to fetch words');
-        const data = await response.json();
-        console.log('📥 [ArtworkPage] Received initial words:', data);
-
-        // Convert string array to Word array
-        const wordMap = new Map<string, number>();
-        data.words.forEach((word: string) => {
-          const normalizedWord = word.toLowerCase();
-          wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
-        });
-        
-        const wordArray: Word[] = Array.from(wordMap.entries()).map(([text, value]) => ({
-          text,
-          value
-        }));
-
-        setWords(wordArray);
-      } catch (err) {
-        console.error('🔴 [ArtworkPage] Error fetching words:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch words');
-      }
-    };
-
-    fetchWords();
-
-    // Set up WebSocket connection
-    console.log('🔵 [ArtworkPage] Setting up WebSocket connection');
+    // Connect to WebSocket
+    console.log('🔵 [ArtworkPage] Setting up WebSocket connection for code:', code);
     wsService.connect(code, false);
 
     // Handle WebSocket messages
