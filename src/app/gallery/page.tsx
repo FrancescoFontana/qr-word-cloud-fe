@@ -65,7 +65,7 @@ export default function GalleryPage() {
     const fetchWords = async () => {
       try {
         console.log('🔵 [GalleryPage] Fetching initial words');
-        const response = await fetch('https://qr-word-cloud-be.onrender.com/api/words/all');
+        const response = await fetch('https://api.unveilinglights.it/api/words/all');
         if (!response.ok) throw new Error('Failed to fetch words');
         const data: ApiResponse = await response.json();
         console.log('📥 [GalleryPage] Received initial words:', data);
@@ -242,10 +242,10 @@ export default function GalleryPage() {
           "Send a word in the Cloud"
         </div>
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
             {Object.entries(artworks).map(([code, artwork]) => (
               <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
-                <div className="absolute inset-0 h-full">
+                <div className="absolute inset-0">
                   <WordCloud words={artwork.words} isBlurred={artwork.isBlurred} />
                 </div>
                 <div 
@@ -256,7 +256,7 @@ export default function GalleryPage() {
                   <div className="w-full h-full flex items-center justify-center">
                     <QRCodeSVG 
                       value={`${window.location.origin}/artwork/${code}`}
-                      size={Math.min(window.innerWidth * 0.12, 180)}
+                      size={Math.min(window.innerWidth * 0.15, 200)}
                       fgColor="white"
                       bgColor="transparent"
                     />

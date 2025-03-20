@@ -23,7 +23,7 @@ class WebSocketService {
   }
 
   private initializeConnection() {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://qr-word-cloud-be.onrender.com/ws';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://api.unveilinglights.it/ws';
     console.log('🔵 [WebSocket v3] Initializing connection to:', wsUrl);
     
     this.ws = new WebSocket(wsUrl);
