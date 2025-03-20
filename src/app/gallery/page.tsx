@@ -19,11 +19,17 @@ interface ArtworkData {
 }
 
 interface Artworks {
-  [code: string]: ArtworkData;
+  [key: string]: ArtworkData;
 }
 
 interface ApiResponse {
   [code: string]: string[];
+}
+
+interface WebSocketMessage {
+  type: string;
+  artworkCode: string;
+  codes: string[];
 }
 
 export default function GalleryPage() {
@@ -89,32 +95,18 @@ export default function GalleryPage() {
     const handleMessage = (event: MessageEvent) => {
       try {
         console.log('📥 [GalleryPage] Received WebSocket message:', event.data);
-        const data = JSON.parse(event.data);
+        const data: WebSocketMessage = JSON.parse(event.data);
         
         switch (data.type) {
           case 'update_cloud':
-            if (data.words && data.artworkCode) {
+            if (data.artworkCode) {
               console.log('📊 [GalleryPage] Processing word update for code:', data.artworkCode);
-              // Convert string array to Word array
-              const wordMap = new Map<string, number>();
-              data.words.forEach((word: string) => {
-                const normalizedWord = word.toLowerCase();
-                wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
-              });
-              
-              const wordArray: Word[] = Array.from(wordMap.entries()).map(([text, value]) => ({
-                text,
-                value
-              }));
-              
-              console.log('✨ [GalleryPage] Setting new words for code:', data.artworkCode);
               
               // First, update the words and hide QR code
               setArtworks(prev => ({
                 ...prev,
                 [data.artworkCode]: {
                   ...prev[data.artworkCode],
-                  words: wordArray,
                   isBlurred: false,
                   showQR: false
                 }
@@ -134,13 +126,28 @@ export default function GalleryPage() {
             }
             break;
 
+          case 'new_artwork':
+            if (data.artworkCode && data.codes) {
+              console.log('🎨 [GalleryPage] Processing new artwork:', data.artworkCode);
+              // Initialize new artwork with empty words
+              setArtworks(prev => ({
+                ...prev,
+                [data.artworkCode]: {
+                  words: [],
+                  isBlurred: true,
+                  showQR: true
+                }
+              }));
+            }
+            break;
+
           case 'error':
-            console.error('🔴 [GalleryPage] Received error:', data.message);
-            setError(data.message);
+            console.error('🔴 [GalleryPage] WebSocket error:', data);
+            setError('Connection error occurred');
             break;
 
           default:
-            console.log('ℹ️ [GalleryPage] Received unknown message type:', data.type);
+            console.warn('⚠️ [GalleryPage] Unknown message type:', data.type);
         }
       } catch (error) {
         console.error('🔴 [GalleryPage] Error processing WebSocket message:', error);
