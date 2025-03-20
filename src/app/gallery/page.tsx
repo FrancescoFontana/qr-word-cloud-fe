@@ -1,11 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { WordCloud } from '@/components/WordCloud';
-import { QRCodeSVG } from 'qrcode.react';
+import dynamic from 'next/dynamic';
+import { useWordCloudStore, wsService } from '@/services/websocket';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { wsService } from '@/services/websocket';
+import { QRCodeSVG } from 'qrcode.react';
+
+const WordCloud = dynamic(() => import('@/components/WordCloud').then(mod => ({ default: mod.WordCloud })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-full w-full">
+      <p className="text-white/50 text-xl">Loading word cloud...</p>
+    </div>
+  ),
+});
 
 interface Word {
   text: string;

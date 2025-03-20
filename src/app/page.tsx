@@ -1,4 +1,17 @@
-import { WordCloud } from '@/components/WordCloud';
+'use client';
+
+import dynamic from 'next/dynamic';
+import { useEffect, useState } from 'react';
+import { useWordCloudStore } from '@/services/websocket';
+
+const WordCloud = dynamic(() => import('@/components/WordCloud').then(mod => ({ default: mod.WordCloud })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-screen w-screen">
+      <p className="text-white/50 text-xl">Loading word cloud...</p>
+    </div>
+  ),
+});
 
 export default function Home() {
   // Example words for the word cloud
