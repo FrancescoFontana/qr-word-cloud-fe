@@ -28,102 +28,131 @@ export class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectTimeout = 1000;
+  private wordMap: Map<string, number> = new Map();
   private isInitialLoad: boolean = true;
   private keepAliveInterval: NodeJS.Timeout | null = null;
   private isViewPage: boolean = false;
-  private messageHandlers: ((event: MessageEvent) => void)[] = [];
+  private messageHandlers: Map<string, ((data: any) => void)[]> = new Map();
 
-  constructor(private url: string) {
-    console.log('🔵 [WebSocket] Service initialized with URL:', url);
-  }
+  constructor(private url: string) {}
 
   addEventListener(type: string, handler: (event: MessageEvent) => void) {
-    console.log('🔵 [WebSocket] Adding message handler');
-    this.messageHandlers.push(handler);
+    if (!this.messageHandlers.has(type)) {
+      this.messageHandlers.set(type, []);
+    }
+    this.messageHandlers.get(type)?.push(handler);
   }
 
   removeEventListener(type: string, handler: (event: MessageEvent) => void) {
-    console.log('🔵 [WebSocket] Removing message handler');
-    const index = this.messageHandlers.indexOf(handler);
-    if (index !== -1) {
-      this.messageHandlers.splice(index, 1);
+    const handlers = this.messageHandlers.get(type);
+    if (handlers) {
+      const index = handlers.indexOf(handler);
+      if (index !== -1) {
+        handlers.splice(index, 1);
+      }
     }
   }
 
   connect(code: string, isViewPage: boolean = false) {
-    console.log('🔵 [WebSocket] Connecting with code:', code, 'isViewPage:', isViewPage);
-    
     if (this.ws?.readyState === WebSocket.OPEN) {
-      console.log('🔵 [WebSocket] Connection already open, skipping');
       return;
     }
 
     this.isViewPage = isViewPage;
-    console.log('🔵 [WebSocket] Creating new WebSocket connection to:', this.url);
-    
-    try {
-      this.ws = new WebSocket(this.url);
-      this.setupEventListeners(code);
-      this.reconnectAttempts = 0;
-      this.isInitialLoad = true;
+    console.log('🔵 [WebSocket v3] Initializing connection to:', this.url);
+    this.ws = new WebSocket(this.url);
+    this.setupEventListeners(code);
+    this.reconnectAttempts = 0;
+    this.isInitialLoad = true;
 
-      // Start keep-alive interval
-      this.keepAliveInterval = setInterval(() => {
-        if (this.ws?.readyState === WebSocket.OPEN) {
-          console.log('🔵 [WebSocket] Sending keep-alive ping');
-          this.ws.send(JSON.stringify({ type: 'ping' }));
-        }
-      }, 30000); // Send ping every 30 seconds
-    } catch (error) {
-      console.error('🔴 [WebSocket] Error creating WebSocket:', error);
-      this.handleReconnect(code);
-    }
+    // Start keep-alive interval
+    this.keepAliveInterval = setInterval(() => {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 30000); // Send ping every 30 seconds
+  }
+
+  private updateWordCloud() {
+    const words = Array.from(this.wordMap.entries()).map(([text, value]) => ({
+      text,
+      value
+    }));
+    useWordCloudStore.getState().setWords(words);
   }
 
   private setupEventListeners(code: string) {
-    if (!this.ws) {
-      console.error('🔴 [WebSocket] Cannot setup event listeners: WebSocket is null');
-      return;
-    }
+    if (!this.ws) return;
 
     this.ws.onopen = () => {
-      console.log('🟢 [WebSocket] Connection opened');
+      console.log('🟢 [WebSocket v3] Connected, sending join_artwork message');
       this.reconnectAttempts = 0;
       const message = { 
         type: 'join_artwork', 
         artworkCode: code 
       };
-      console.log('📤 [WebSocket] Sending join message:', message);
+      console.log('📤 [WebSocket v3] Sending message:', message);
       this.ws?.send(JSON.stringify(message));
     };
 
     this.ws.onmessage = (event) => {
-      console.log('📥 [WebSocket] Received message:', event.data);
+      console.log('📥 [WebSocket v3] Received message:', event.data);
+      const data = JSON.parse(event.data);
       
-      try {
-        // Call registered message handlers
-        this.messageHandlers.forEach(handler => {
-          try {
-            handler(event);
-          } catch (error) {
-            console.error('🔴 [WebSocket] Error in message handler:', error);
+      // Call registered message handlers
+      this.messageHandlers.get('message')?.forEach(handler => handler(event));
+      
+      switch (data.type) {
+        case 'update_cloud':
+          if (data.words) {
+            // Clear the word map and update with new words
+            this.wordMap.clear();
+            data.words.forEach((word: string) => {
+              const normalizedWord = word.toLowerCase();
+              this.wordMap.set(normalizedWord, (this.wordMap.get(normalizedWord) || 0) + 1);
+            });
+            this.updateWordCloud();
+            
+            // Handle blur state based on page type and newWord field
+            if (data.newWord) {
+              if (this.isViewPage) {
+                // On view page, unblur for 3 seconds when new word arrives
+                useWordCloudStore.getState().setBlurred(false);
+                setTimeout(() => {
+                  useWordCloudStore.getState().setBlurred(true);
+                }, 3000);
+              } else {
+                // On artwork page, unblur and stay unblurred when new word arrives
+                useWordCloudStore.getState().setBlurred(false);
+              }
+            } else if (!this.isInitialLoad) {
+              // For non-new-word updates, only unblur if not initial load
+              useWordCloudStore.getState().setBlurred(false);
+              if (this.isViewPage) {
+                setTimeout(() => {
+                  useWordCloudStore.getState().setBlurred(true);
+                }, 3000);
+              }
+            }
           }
-        });
-      } catch (error) {
-        console.error('🔴 [WebSocket] Error processing message:', error);
+          break;
+
+        case 'error':
+          useWordCloudStore.getState().setError(data.message);
+          break;
       }
     };
 
     this.ws.onclose = (event) => {
-      console.log(`🔴 [WebSocket] Connection closed with code ${event.code} and reason: ${event.reason}`);
+      console.log(`WebSocket disconnected with code ${event.code} and reason: ${event.reason}`);
       this.handleReconnect(code);
     };
 
     this.ws.onerror = (error) => {
-      console.error('🔴 [WebSocket] WebSocket error:', error);
+      console.error('WebSocket error:', error);
       // Log additional connection state information
       if (this.ws) {
-        console.log('🔴 [WebSocket] Connection state:', {
+        console.log('WebSocket state:', {
           readyState: this.ws.readyState,
           url: this.ws.url,
           protocol: this.ws.protocol
@@ -136,18 +165,14 @@ export class WebSocketService {
   private handleReconnect(code: string) {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      const delay = this.reconnectTimeout * this.reconnectAttempts;
-      console.log(`🔄 [WebSocket] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`);
       setTimeout(() => {
+        console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
         this.connect(code);
-      }, delay);
-    } else {
-      console.error('🔴 [WebSocket] Max reconnection attempts reached');
+      }, this.reconnectTimeout * this.reconnectAttempts);
     }
   }
 
   disconnect() {
-    console.log('🔵 [WebSocket] Disconnecting');
     if (this.keepAliveInterval) {
       clearInterval(this.keepAliveInterval);
       this.keepAliveInterval = null;
@@ -155,6 +180,7 @@ export class WebSocketService {
     if (this.ws) {
       this.ws.close();
       this.ws = null;
+      this.wordMap.clear();
     }
   }
 
@@ -165,13 +191,10 @@ export class WebSocketService {
         type: 'send_word', 
         word: word.toLowerCase() // Normalize to lowercase before sending
       };
-      console.log('📤 [WebSocket] Sending word message:', message);
+      console.log('📤 [WebSocket v3] Sending word message:', message);
       this.ws.send(JSON.stringify(message));
-    } else {
-      console.error('🔴 [WebSocket] Cannot send word: WebSocket is not open');
     }
   }
 }
 
-// Create and export a singleton instance
 export const wsService = new WebSocketService(process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws'); 

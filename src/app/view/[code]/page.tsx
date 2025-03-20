@@ -18,6 +18,8 @@ export default function ViewPage() {
   const [error, setError] = useState<string | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
   const [isBlurred, setIsBlurred] = useState(true);
+  const [showQR, setShowQR] = useState(true);
+  const [artworkUrl, setArtworkUrl] = useState('');
 
   useEffect(() => {
     console.log('🔵 [ViewPage] Initializing with code:', code);
@@ -37,6 +39,7 @@ export default function ViewPage() {
         const data = await response.json();
         console.log('📥 [ViewPage] Received initial words:', data);
         setWords(data.words);
+        setArtworkUrl(data.artworkUrl);
       } catch (err) {
         console.error('🔴 [ViewPage] Error fetching words:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch words');
@@ -74,16 +77,16 @@ export default function ViewPage() {
               
               console.log('✨ [ViewPage] Setting new words:', newWords);
               setWords(newWords);
-
-              // Handle blur state for new words
-              if (data.newWord) {
-                console.log('👁️ [ViewPage] New word received, unblurring');
-                setIsBlurred(false);
-                setTimeout(() => {
-                  console.log('👁️ [ViewPage] Re-blurring after 3 seconds');
-                  setIsBlurred(true);
-                }, 3000);
-              }
+              
+              // Fade out QR and unblur word cloud
+              setShowQR(false);
+              setIsBlurred(false);
+              
+              // After 3 seconds, blur word cloud and show QR again
+              setTimeout(() => {
+                setIsBlurred(true);
+                setShowQR(true);
+              }, 3000);
             }
             break;
 
@@ -119,22 +122,28 @@ export default function ViewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="relative aspect-square">
-            <WordCloud words={words} isBlurred={isBlurred} />
-          </div>
-          <div className="flex items-center justify-center">
-            <div className="bg-transparent p-4 rounded-lg">
-              <QRCodeSVG
-                value={`${process.env.NEXT_PUBLIC_BASE_URL}/view/${code}`}
-                size={400}
-                level="H"
-                includeMargin={true}
-                fgColor="white"
-                bgColor="transparent"
-              />
+    <div className="min-h-screen bg-black text-white">
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="relative w-full h-full">
+          <WordCloud words={words} isBlurred={isBlurred} />
+          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${showQR ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
+              <h1 className="text-3xl font-bold mb-6 text-center">
+                Scan to add words to the cloud
+              </h1>
+              <div className="flex justify-center mb-6">
+                <div className="bg-transparent p-3 rounded-lg">
+                  <QRCodeSVG 
+                    value={artworkUrl} 
+                    size={200} 
+                    fgColor="white"
+                    bgColor="transparent"
+                  />
+                </div>
+              </div>
+              <p className="text-center text-gray-300">
+                Scan this QR code with your phone to add words to the cloud
+              </p>
             </div>
           </div>
         </div>

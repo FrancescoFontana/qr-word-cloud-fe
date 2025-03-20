@@ -18,6 +18,8 @@ export default function ArtworkPage() {
   const [fontLoaded, setFontLoaded] = useState(false);
   const [inputWord, setInputWord] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isBlurred, setIsBlurred] = useState(true);
+  const [showInput, setShowInput] = useState(true);
 
   useEffect(() => {
     console.log('🔵 [ArtworkPage] Initializing with code:', code);
@@ -109,6 +111,16 @@ export default function ArtworkPage() {
       console.log('📤 [ArtworkPage] Sending word:', inputWord);
       wsService.sendWord(inputWord.trim());
       setInputWord('');
+      
+      // Fade out input and unblur word cloud
+      setShowInput(false);
+      setIsBlurred(false);
+      
+      // After 3 seconds, blur word cloud and show input again
+      setTimeout(() => {
+        setIsBlurred(true);
+        setShowInput(true);
+      }, 3000);
     } catch (err) {
       console.error('🔴 [ArtworkPage] Error sending word:', err);
       setError('Failed to send word');
@@ -126,13 +138,11 @@ export default function ArtworkPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="relative aspect-square">
-            <WordCloud words={words} />
-          </div>
-          <div className="flex items-center justify-center">
+    <div className="min-h-screen bg-black text-white">
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="relative w-full h-full">
+          <WordCloud words={words} isBlurred={isBlurred} />
+          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${showInput ? 'opacity-100' : 'opacity-0'}`}>
             <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
               <h1 className="text-3xl font-bold mb-6 text-center">
                 Add a word to the cloud

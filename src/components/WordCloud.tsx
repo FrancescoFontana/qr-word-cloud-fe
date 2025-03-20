@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import ReactWordCloud from 'react-d3-cloud';
+import { useEffect, useState } from 'react';
+import ReactWordcloud from 'react-d3-cloud';
 import { scaleOrdinal } from 'd3-scale';
 import { schemeCategory10 } from 'd3-scale-chromatic';
 
@@ -18,33 +18,31 @@ interface WordCloudProps {
 export function WordCloud({ words, isBlurred = false }: WordCloudProps) {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [fontLoaded, setFontLoaded] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check if font is loaded
-    document.fonts.ready.then(() => {
-      console.log('Fonts loaded');
+    // Load font
+    document.fonts.load('1em "Titillium Web"').then(() => {
+      console.log('🔵 [WordCloud] Font loaded');
       setFontLoaded(true);
     });
-  }, []);
 
-  useEffect(() => {
+    // Update dimensions
     const updateDimensions = () => {
-      if (containerRef.current) {
-        const { width, height } = containerRef.current.getBoundingClientRect();
-        setDimensions({ width, height });
-      }
+      const width = window.innerWidth;
+      const height = window.innerHeight - 64; // Subtract header height
+      setDimensions({ width, height });
     };
 
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
+
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
   if (!fontLoaded) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <div className="text-white text-xl animate-pulse">Loading...</div>
+        <div className="text-white">Loading...</div>
       </div>
     );
   }
@@ -52,17 +50,17 @@ export function WordCloud({ words, isBlurred = false }: WordCloudProps) {
   const colors = scaleOrdinal(schemeCategory10);
 
   return (
-    <div ref={containerRef} className={`w-full h-full transition-all duration-1000 ${isBlurred ? 'blur-sm' : 'blur-0'}`}>
-      <ReactWordCloud
+    <div className={`w-full h-full transition-all duration-500 ${isBlurred ? 'blur-xl' : ''}`}>
+      <ReactWordcloud
         data={words}
         width={dimensions.width}
         height={dimensions.height}
         font="Titillium Web"
-        fontSize={(word: Word) => Math.log2(word.value) * 5}
+        fontSize={() => 40}
         rotate={0}
         padding={5}
         random={() => 0.5}
-        fill={(word: Word) => colors(word.text)}
+        fill={() => '#ffffff'}
       />
     </div>
   );
