@@ -17,6 +17,7 @@ interface WordCloudData {
 export function WordCloud({ words }: WordCloudProps) {
   const [mounted, setMounted] = useState(false);
   const [fontLoaded, setFontLoaded] = useState(false);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     setMounted(true);
@@ -28,6 +29,22 @@ export function WordCloud({ words }: WordCloudProps) {
       console.log('Fonts loaded');
       setFontLoaded(true);
     });
+  }, []);
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      const container = document.getElementById('word-cloud-container');
+      if (container) {
+        setDimensions({
+          width: container.clientWidth,
+          height: container.clientHeight
+        });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
   if (!mounted || !fontLoaded) {
@@ -53,14 +70,18 @@ export function WordCloud({ words }: WordCloudProps) {
 
   const colors = scaleOrdinal(schemeCategory10);
 
+  // Calculate dynamic font sizes based on number of words
+  const minSize = Math.max(20, Math.min(40, 100 / Math.sqrt(data.length)));
+  const maxSize = Math.max(60, Math.min(120, 200 / Math.sqrt(data.length)));
+
   return (
-    <div className="w-full h-full">
+    <div id="word-cloud-container" className="w-full h-full">
       <ReactWordcloud
         data={data}
-        width={400}
-        height={400}
+        width={dimensions.width}
+        height={dimensions.height}
         font="Titillium Web"
-        fontSize={(word) => 20 + (word.value * 60)}
+        fontSize={(word) => minSize + (word.value * (maxSize - minSize))}
         padding={5}
         random={() => 0.5}
         rotate={0}

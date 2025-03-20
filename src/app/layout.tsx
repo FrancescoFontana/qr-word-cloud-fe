@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Titillium_Web } from 'next/font/google';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const titilliumWeb = Titillium_Web({
+  subsets: ['latin'],
+  weight: ['200', '300', '400', '600', '700', '900'],
+  variable: '--font-titillium',
+});
 
 export const metadata: Metadata = {
   title: 'QR Word Cloud',
-  description: 'Interactive word cloud with QR code contribution',
-  icons: {
-    icon: '/favicon.svg',
-  },
+  description: 'Leave a word in the clouds',
 };
 
 export default function RootLayout({
@@ -19,7 +20,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={`${titilliumWeb.variable} font-sans bg-black text-white`}>
+        <header className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-sm border-b border-white/10">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex justify-center">
+            <img src="/logo.svg" alt="QR Word Cloud Logo" className="h-12" />
+          </div>
+        </header>
+        <main className="pt-20">
+          {children}
+        </main>
+      </body>
     </html>
   );
 }

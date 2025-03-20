@@ -11,6 +11,10 @@ interface PageProps {
   };
 }
 
+interface WordsResponse {
+  [code: string]: string[];
+}
+
 export default function ViewPage({ params }: PageProps) {
   const { code } = params;
   const [words, setWords] = useState<string[]>([]);
@@ -20,6 +24,7 @@ export default function ViewPage({ params }: PageProps) {
   const [showQR, setShowQR] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [artworkUrl, setArtworkUrl] = useState('');
+  const [fontLoaded, setFontLoaded] = useState(false);
 
   useEffect(() => {
     // Set artwork URL after component mounts
@@ -78,15 +83,60 @@ export default function ViewPage({ params }: PageProps) {
     return () => wsService.removeEventListener('message', handleMessage);
   }, [isInitialLoad]);
 
+  useEffect(() => {
+    // Check if font is loaded
+    document.fonts.ready.then(() => {
+      console.log('Fonts loaded');
+      setFontLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    const fetchWords = async () => {
+      try {
+        const response = await fetch('https://qr-word-cloud-be.onrender.com/api/words/all');
+        if (!response.ok) {
+          throw new Error('Failed to fetch words');
+        }
+        const data: WordsResponse = await response.json();
+        setWords(data[params.code] || []);
+      } catch (err) {
+        setError('Errore nel caricamento delle parole');
+        console.error('Error fetching words:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWords();
+  }, [params.code]);
+
+  if (isLoading || !fontLoaded) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-2xl animate-pulse">
+          Caricamento opera...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-2xl">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-black text-white p-4 sm:p-6 md:p-8">
-      {/* Word Cloud Container */}
-      <div 
-        className={`fixed inset-0 w-full h-screen transition-all duration-1000 ${
-          isBlurred ? 'blur-xl' : ''
-        }`}
-      >
-        <WordCloud words={words} />
+    <div className="min-h-screen bg-black p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="relative w-full aspect-square max-w-4xl mx-auto bg-black/30 backdrop-blur-sm rounded-2xl overflow-hidden">
+          <WordCloud words={words} />
+        </div>
       </div>
 
       {/* Content Overlay */}
