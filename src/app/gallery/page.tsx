@@ -108,8 +108,6 @@ export default function GalleryPage() {
               }));
               
               console.log('✨ [GalleryPage] Setting new words for code:', data.artworkCode);
-              
-              // First, update the words and hide QR code
               setArtworks(prev => ({
                 ...prev,
                 [data.artworkCode]: {
@@ -176,14 +174,8 @@ export default function GalleryPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {Object.entries(artworks).map(([code, artwork]) => (
               <div key={code} className="relative aspect-square bg-black/30 rounded-2xl overflow-hidden">
-                <div className="absolute inset-0">
-                  <WordCloud words={artwork.words} isBlurred={artwork.isBlurred} />
-                </div>
-                <div 
-                  className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${
-                    artwork.showQR ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                  }`}
-                >
+                <WordCloud words={artwork.words} isBlurred={artwork.isBlurred} />
+                <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${artwork.showQR ? 'opacity-100' : 'opacity-0'}`}>
                   <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
                     <h2 className="text-2xl font-bold mb-4 text-center">
                       Artwork #{code}
