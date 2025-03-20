@@ -10,8 +10,8 @@ import { QRCodeSVG } from 'qrcode.react';
 const WordCloud = dynamic(() => import('@/components/WordCloud').then(mod => ({ default: mod.WordCloud })), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-full w-full">
-      <p className="text-white/50 text-xl">Loading word cloud...</p>
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
     </div>
   ),
 });
@@ -19,16 +19,6 @@ const WordCloud = dynamic(() => import('@/components/WordCloud').then(mod => ({ 
 interface Word {
   text: string;
   value: number;
-}
-
-interface ArtworkData {
-  words: Word[];
-  isBlurred: boolean;
-  showQR: boolean;
-}
-
-interface Artworks {
-  [key: string]: ArtworkData;
 }
 
 interface ApiResponse {
@@ -41,6 +31,30 @@ interface WebSocketMessage {
   words?: string[];
   newWord?: string;
   codes?: string[];
+}
+
+// Function to generate a unique, light color based on a string
+function generateLightColor(code: string): string {
+  // Use the code to generate a consistent hue
+  let hash = 0;
+  for (let i = 0; i < code.length; i++) {
+    hash = code.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = hash % 360;
+  
+  // Generate a light color with high saturation and lightness
+  return `hsl(${hue}, 70%, 85%)`;
+}
+
+interface Artwork {
+  words: Word[];
+  isBlurred: boolean;
+  showQR: boolean;
+  color: string;
+}
+
+interface Artworks {
+  [key: string]: Artwork;
 }
 
 export default function GalleryPage() {
@@ -87,7 +101,8 @@ export default function GalleryPage() {
           newArtworks[code] = {
             words: wordArray,
             isBlurred: true,
-            showQR: true
+            showQR: true,
+            color: generateLightColor(code)
           };
         });
 
@@ -179,13 +194,14 @@ export default function GalleryPage() {
           case 'new_artwork':
             if (data.artworkCode && data.codes) {
               console.log('🎨 [GalleryPage] Processing new artwork:', data.artworkCode);
-              // Initialize new artwork with empty words
+              // Initialize new artwork with empty words and a unique color
               setArtworks(prev => ({
                 ...prev,
                 [data.artworkCode]: {
                   words: [],
                   isBlurred: true,
-                  showQR: true
+                  showQR: true,
+                  color: generateLightColor(data.artworkCode)
                 }
               }));
               // Connect to the new artwork's WebSocket only if not already connected
@@ -234,55 +250,58 @@ export default function GalleryPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-black text-white">
-      <Header />
-      <main className="flex-1 flex flex-col items-center justify-center py-16">
-        <div className="text-3xl font-light italic mb-12 text-center">
-          "Send a word in the Cloud"
-        </div>
-        <div className="container mx-auto px-4">
-          <div className="flex flex-nowrap overflow-x-auto gap-8 pb-4">
-            {Object.entries(artworks).map(([code, artwork]) => (
-              <div key={code} className="relative flex-none w-[300px] aspect-square bg-black/30 rounded-2xl overflow-hidden">
-                <div className="absolute inset-0">
-                  <WordCloud words={artwork.words} isBlurred={artwork.isBlurred} />
-                </div>
-                <div 
-                  className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${
-                    artwork.showQR ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                  }`}
-                >
-                  <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
-                    <h2 className="text-2xl font-bold mb-4 text-center">
-                      Artwork #{code}
-                    </h2>
-                    <div className="flex justify-center mb-4">
-                      <div className="bg-transparent p-3 rounded-lg">
-                        <QRCodeSVG 
-                          value={`${window.location.origin}/artwork/${code}`}
-                          size={150}
-                          fgColor="white"
-                          bgColor="transparent"
-                        />
-                      </div>
-                    </div>
-                    <p className="text-center text-gray-300">
-                      Scan to add words
-                    </p>
-                  </div>
-                </div>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-red-50 border-l-4 border-red-400 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
               </div>
-            ))}
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
           </div>
         </div>
-      </main>
-      <Footer />
-      {error && (
-        <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg">
-          {error}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {Object.entries(artworks).map(([code, artwork]) => (
+            <div key={code} className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="relative aspect-square">
+                {artwork.showQR ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white">
+                    <div className="w-[90%] h-[90%]">
+                      <QRCodeSVG
+                        value={`https://qr-word-cloud-fe.vercel.app/artwork/${code}/display`}
+                        size={300}
+                        level="H"
+                        includeMargin={false}
+                        bgColor={artwork.color}
+                        fgColor="#000000"
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`absolute inset-0 transition-opacity duration-300 ${artwork.isBlurred ? 'opacity-50' : 'opacity-100'}`}>
+                    <WordCloud words={artwork.words} />
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 } 
