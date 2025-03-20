@@ -56,7 +56,7 @@ export function WordCloud({ words, isBlurred = false }: WordCloudProps) {
         width={dimensions.width}
         height={dimensions.height}
         font="Titillium Web"
-        fontSize={(word) => Math.log2(word.value) * 10 + 20} // Scale font size based on word frequency
+        fontSize={() => 40}
         rotate={0}
         padding={5}
         random={() => 0.5}
