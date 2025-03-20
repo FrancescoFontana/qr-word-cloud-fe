@@ -13,7 +13,7 @@ interface WordCloudProps {
   isBlurred?: boolean;
 }
 
-export default function WordCloud({ words, isBlurred = false }: WordCloudProps) {
+export function WordCloud({ words, isBlurred = false }: WordCloudProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 

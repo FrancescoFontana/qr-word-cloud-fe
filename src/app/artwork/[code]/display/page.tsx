@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useWordCloudStore, wsService } from '@/services/websocket';
 import dynamic from 'next/dynamic';
 
-const WordCloud = dynamic(() => import('@/components/WordCloud'), {
+const WordCloud = dynamic(() => import('@/components/WordCloud').then(mod => ({ default: mod.WordCloud })), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-screen w-screen">
