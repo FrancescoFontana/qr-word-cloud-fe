@@ -44,28 +44,17 @@ export default function ArtworkPage() {
     // Fetch initial words
     const fetchWords = async () => {
       try {
-        console.log('🔵 [ArtworkPage] Fetching initial words');
-        const response = await fetch(`/api/words/${code}`);
-        if (!response.ok) throw new Error('Failed to fetch words');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/words/${code}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch words');
+        }
         const data = await response.json();
-        console.log('📥 [ArtworkPage] Received initial words:', data);
-
-        // Convert string array to Word array
-        const wordMap = new Map<string, number>();
-        data.words.forEach((word: string) => {
-          const normalizedWord = word.toLowerCase();
-          wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
-        });
-        
-        const wordArray: Word[] = Array.from(wordMap.entries()).map(([text, value]) => ({
-          text,
-          value
-        }));
-
-        setWords(wordArray);
-      } catch (err) {
-        console.error('🔴 [ArtworkPage] Error fetching words:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch words');
+        setWords(data.map((word: any) => ({
+          text: word.text,
+          value: word.count
+        })));
+      } catch (error) {
+        console.error('Error fetching words:', error);
       }
     };
 
