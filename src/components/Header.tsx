@@ -10,11 +10,13 @@ export function Header() {
           <Image
             src="/logo.svg"
             alt="Logo"
-            width={120}
-            height={120}
-            className="w-24 h-24"
+            width={100}
+            height={100}
+            className="mb-2"
           />
-          <h1 className="text-3xl font-light text-white mt-2">Unveiling Lights</h1>
+          <h1 className="text-3xl font-light text-white text-center">
+            Unveiling Lights
+          </h1>
         </div>
       </div>
     </header>
