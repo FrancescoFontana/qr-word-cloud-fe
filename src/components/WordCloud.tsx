@@ -31,22 +31,54 @@ export function WordCloud({ words, isBlurred = false }: WordCloudProps) {
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
+  const calculateFontSize = (value: number, maxValue: number, numWords: number) => {
+    // Base size that scales with the number of words
+    const baseSize = Math.max(12, Math.min(24, 24 - (numWords / 50)));
+    // Scale factor based on container size
+    const containerScale = Math.min(1, Math.max(0.5, dimensions.width / 500));
+    // Calculate relative size based on value
+    const relativeSize = value / maxValue;
+    // Combine factors for final size
+    return Math.max(12, baseSize * containerScale * (0.5 + relativeSize * 0.5));
+  };
+
+  // Generate a color based on the word's value
+  const getWordColor = (value: number, maxValue: number) => {
+    // Color palette with light, visible colors
+    const colors = [
+      '#FF6B6B', // Coral red
+      '#4ECDC4', // Turquoise
+      '#45B7D1', // Sky blue
+      '#96CEB4', // Sage green
+      '#FFEEAD', // Cream yellow
+      '#D4A5A5', // Dusty rose
+      '#9B59B6', // Purple
+      '#3498DB', // Blue
+      '#E67E22', // Orange
+      '#2ECC71', // Green
+    ];
+    
+    // Use the word's value to select a color
+    const colorIndex = Math.floor((value / maxValue) * colors.length);
+    return colors[colorIndex % colors.length];
+  };
+
+  // Calculate maximum word value for font sizing
+  const maxValue = Math.max(...words.map(w => w.value));
+  const numWords = words.length;
+
   return (
-    <div 
-      ref={containerRef} 
-      className={`w-full h-full transition-opacity duration-500 ${isBlurred ? 'opacity-50' : 'opacity-100'}`}
-      style={{ minHeight: '300px', position: 'relative' }}
-    >
+    <div className="w-full h-full" style={{ position: 'relative' }}>
       <ReactWordcloud
         data={words}
         width={dimensions.width}
         height={dimensions.height}
         font="Titillium Web"
-        fontSize={(word) => Math.log2(word.value) * 10 + 20}
+        fontSize={(word) => calculateFontSize(word.value, maxValue, numWords)}
         rotate={0}
         padding={5}
         random={() => 0.5} // Fixed random seed for consistent layout
-        fill={() => '#ffffff'}
+        fill={(word) => getWordColor(word.value, maxValue)}
       />
     </div>
   );
