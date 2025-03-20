@@ -34,8 +34,8 @@ export function WordCloud({ words, isBlurred = false }: WordCloudProps) {
   return (
     <div 
       ref={containerRef} 
-      className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isBlurred ? 'opacity-50' : 'opacity-100'}`}
-      style={{ minHeight: '300px' }}
+      className={`w-full h-full transition-opacity duration-500 ${isBlurred ? 'opacity-50' : 'opacity-100'}`}
+      style={{ minHeight: '300px', position: 'relative' }}
     >
       <ReactWordcloud
         data={words}
