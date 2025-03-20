@@ -78,8 +78,8 @@ export function WordCloud({ words }: WordCloudProps) {
     <div id="word-cloud-container" className="w-full h-full">
       <ReactWordcloud
         data={data}
-        width={dimensions.width}
-        height={dimensions.height}
+        width={dimensions.width || 400}
+        height={dimensions.height || 400}
         font="Titillium Web"
         fontSize={(word) => minSize + (word.value * (maxSize - minSize))}
         padding={5}

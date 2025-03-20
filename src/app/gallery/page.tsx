@@ -201,6 +201,8 @@ export default function GalleryPage() {
                     size={300}
                     level="H"
                     includeMargin={true}
+                    fgColor="white"
+                    bgColor="transparent"
                   />
                 </div>
               </div>
