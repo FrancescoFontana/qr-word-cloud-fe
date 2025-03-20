@@ -10,7 +10,7 @@ interface WordsResponse {
 }
 
 type WebSocketMessage = {
-  type: 'join_artwork' | 'update_cloud' | 'error' | 'new_artwork';
+  type: 'join_artwork' | 'update_cloud' | 'error';
   artworkCode?: string;
   words?: string[];
   message?: string;
@@ -25,7 +25,6 @@ export default function GalleryPage() {
   const [wordClouds, setWordClouds] = useState<{ [key: string]: string[] }>({});
   const [fontLoaded, setFontLoaded] = useState(false);
   const [blurredClouds, setBlurredClouds] = useState<{ [key: string]: boolean }>({});
-  const [galleryWs, setGalleryWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
     // Check if font is loaded
@@ -63,79 +62,19 @@ export default function GalleryPage() {
     fetchCodes();
   }, []);
 
-  // Initialize WebSocket connection for new artworks
   useEffect(() => {
-    const ws = new WebSocket('wss://qr-word-cloud-be.onrender.com/ws');
-    
-    ws.onopen = () => {
-      console.log('WebSocket connected for gallery');
-      ws.send(JSON.stringify({ type: 'join_gallery' }));
-    };
-
-    ws.onmessage = (event) => {
-      const message: WebSocketMessage = JSON.parse(event.data);
-      console.log('Received gallery message:', message);
-
-      switch (message.type) {
-        case 'new_artwork':
-          if (message.artworkCode && message.words) {
-            const code = message.artworkCode;
-            setCodes(prev => ({
-              ...prev,
-              [code]: message.words || []
-            }));
-            setVisibleQRs(prev => ({
-              ...prev,
-              [code]: true
-            }));
-            setBlurredClouds(prev => ({
-              ...prev,
-              [code]: true
-            }));
-          }
-          break;
-        case 'error':
-          console.error('Gallery WebSocket error:', message.message);
-          break;
-        default:
-          console.log(`Received unknown gallery message type: ${message.type}`);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('Gallery WebSocket error:', error);
-    };
-
-    ws.onclose = () => {
-      console.log('Gallery WebSocket closed');
-    };
-
-    setGalleryWs(ws);
-
-    return () => {
-      ws.close();
-    };
-  }, []);
-
-  // Initialize WebSocket connections for each artwork
-  useEffect(() => {
-    // Close existing connections
-    Object.values(websockets).forEach(ws => {
-      ws.close();
-    });
-
-    // Create new connections for each code
+    // Initialize WebSocket connections for each code
     Object.keys(codes).forEach((code) => {
       const ws = new WebSocket('wss://qr-word-cloud-be.onrender.com/ws');
       
       ws.onopen = () => {
-        console.log(`WebSocket connected for artwork ${code}`);
+        console.log(`WebSocket connected for code ${code}`);
         ws.send(JSON.stringify({ type: 'join_artwork', artworkCode: code }));
       };
 
       ws.onmessage = (event) => {
         const message: WebSocketMessage = JSON.parse(event.data);
-        console.log(`Received message for artwork ${code}:`, message);
+        console.log('Received message:', message);
 
         switch (message.type) {
           case 'update_cloud':
@@ -167,19 +106,19 @@ export default function GalleryPage() {
             }
             break;
           case 'error':
-            console.error(`WebSocket error for artwork ${code}:`, message.message);
+            console.error(`WebSocket error for code ${code}:`, message.message);
             break;
           default:
-            console.log(`Received unknown message type for artwork ${code}: ${message.type}`);
+            console.log(`Received unknown message type: ${message.type}`);
         }
       };
 
       ws.onerror = (error) => {
-        console.error(`WebSocket error for artwork ${code}:`, error);
+        console.error(`WebSocket error for code ${code}:`, error);
       };
 
       ws.onclose = () => {
-        console.log(`WebSocket closed for artwork ${code}`);
+        console.log(`WebSocket closed for code ${code}`);
       };
 
       setWebsockets(prev => ({
@@ -244,9 +183,9 @@ export default function GalleryPage() {
         <h1 className="text-white text-4xl font-bold mb-4 text-center">
           "Leave a word in the clouds"
         </h1>
-        <div className="flex flex-row gap-8 mb-12 overflow-x-auto pb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {Object.entries(codes).map(([code, words]) => (
-            <div key={code} className="relative w-[400px] h-[400px] bg-black/30 backdrop-blur-sm rounded-2xl overflow-hidden flex-shrink-0">
+            <div key={code} className="relative w-full aspect-square bg-black/30 backdrop-blur-sm rounded-2xl overflow-hidden">
               <div className={`absolute inset-0 transition-all duration-500 ${blurredClouds[code] ? 'blur-xl' : ''}`}>
                 <WordCloud words={wordClouds[code] || words} />
               </div>
