@@ -1,12 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
 import { WordCloud } from '@/components/WordCloud';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { QRCodeSVG } from 'qrcode.react';
 import { wsService } from '@/services/websocket';
 
+interface Word {
+  text: string;
+  value: number;
+}
+
 interface ArtworkData {
-  words: string[];
+  words: Word[];
   isBlurred: boolean;
   showQR: boolean;
 }
@@ -15,12 +22,18 @@ interface Artworks {
   [code: string]: ArtworkData;
 }
 
+interface ApiResponse {
+  [code: string]: string[];
+}
+
 export default function GalleryPage() {
   const [artworks, setArtworks] = useState<Artworks>({});
   const [error, setError] = useState<string | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
 
   useEffect(() => {
+    console.log('🔵 [GalleryPage] Initializing');
+
     // Load font
     document.fonts.load('1em "Titillium Web"').then(() => {
       console.log('🔵 [GalleryPage] Font loaded');
@@ -33,24 +46,36 @@ export default function GalleryPage() {
         console.log('🔵 [GalleryPage] Fetching initial words');
         const response = await fetch('https://qr-word-cloud-be.onrender.com/api/words/all');
         if (!response.ok) throw new Error('Failed to fetch words');
-        const data = await response.json();
+        const data: ApiResponse = await response.json();
         console.log('📥 [GalleryPage] Received initial words:', data);
 
-        // Initialize artworks state with fetched data
-        const initialArtworks: Artworks = {};
+        // Convert string arrays to Word arrays and initialize artwork states
+        const newArtworks: Artworks = {};
         Object.entries(data).forEach(([code, words]) => {
-          initialArtworks[code] = {
-            words: words as string[],
+          const wordMap = new Map<string, number>();
+          words.forEach(word => {
+            const normalizedWord = word.toLowerCase();
+            wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
+          });
+          
+          const wordArray: Word[] = Array.from(wordMap.entries()).map(([text, value]) => ({
+            text,
+            value
+          }));
+
+          newArtworks[code] = {
+            words: wordArray,
             isBlurred: true,
             showQR: true
           };
         });
-        setArtworks(initialArtworks);
 
-        // Connect to WebSocket for all codes
-        console.log('🔵 [GalleryPage] Setting up WebSocket connection');
-        Object.keys(initialArtworks).forEach(code => {
-          wsService.connect(code, true);
+        setArtworks(newArtworks);
+
+        // Set up WebSocket connections for each code
+        Object.keys(newArtworks).forEach(code => {
+          console.log('🔵 [GalleryPage] Setting up WebSocket connection for code:', code);
+          wsService.connect(code, false);
         });
       } catch (err) {
         console.error('🔴 [GalleryPage] Error fetching words:', err);
@@ -66,35 +91,54 @@ export default function GalleryPage() {
         console.log('📥 [GalleryPage] Received WebSocket message:', event.data);
         const data = JSON.parse(event.data);
         
-        if (data.type === 'update_cloud' && data.words) {
-          const code = data.artworkCode;
-          console.log('📊 [GalleryPage] Processing word update for code:', code);
-          
-          // Update words for the specific code
-          setArtworks(prev => ({
-            ...prev,
-            [code]: {
-              ...prev[code],
-              words: data.words,
-              isBlurred: false,
-              showQR: false
+        switch (data.type) {
+          case 'update_cloud':
+            if (data.words && data.code) {
+              console.log('📊 [GalleryPage] Processing word update for code:', data.code);
+              // Convert string array to Word array
+              const wordMap = new Map<string, number>();
+              data.words.forEach((word: string) => {
+                const normalizedWord = word.toLowerCase();
+                wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
+              });
+              
+              const wordArray: Word[] = Array.from(wordMap.entries()).map(([text, value]) => ({
+                text,
+                value
+              }));
+              
+              console.log('✨ [GalleryPage] Setting new words for code:', data.code);
+              setArtworks(prev => ({
+                ...prev,
+                [data.code]: {
+                  ...prev[data.code],
+                  words: wordArray,
+                  isBlurred: false,
+                  showQR: false
+                }
+              }));
+              
+              // After 3 seconds, blur word cloud and show QR code again
+              setTimeout(() => {
+                setArtworks(prev => ({
+                  ...prev,
+                  [data.code]: {
+                    ...prev[data.code],
+                    isBlurred: true,
+                    showQR: true
+                  }
+                }));
+              }, 3000);
             }
-          }));
+            break;
 
-          // After 3 seconds, blur word cloud and show QR again
-          setTimeout(() => {
-            setArtworks(prev => ({
-              ...prev,
-              [code]: {
-                ...prev[code],
-                isBlurred: true,
-                showQR: true
-              }
-            }));
-          }, 3000);
-        } else if (data.type === 'error') {
-          console.error('🔴 [GalleryPage] Received error:', data.message);
-          setError(data.message);
+          case 'error':
+            console.error('🔴 [GalleryPage] Received error:', data.message);
+            setError(data.message);
+            break;
+
+          default:
+            console.log('ℹ️ [GalleryPage] Received unknown message type:', data.type);
         }
       } catch (error) {
         console.error('🔴 [GalleryPage] Error processing WebSocket message:', error);
@@ -107,7 +151,7 @@ export default function GalleryPage() {
     return () => {
       console.log('🔵 [GalleryPage] Cleaning up');
       wsService.removeEventListener('message', handleMessage);
-      // Disconnect from all codes
+      // Disconnect all WebSocket connections
       Object.keys(artworks).forEach(code => {
         wsService.disconnect();
       });
@@ -123,41 +167,40 @@ export default function GalleryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {Object.entries(artworks).map(([code, data]) => (
-            <div key={code} className="relative aspect-square">
-              {/* Word Cloud */}
-              <div className="absolute inset-0">
-                <WordCloud words={data.words} isBlurred={data.isBlurred} />
-              </div>
-
-              {/* QR Code */}
-              <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${data.showQR ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
-                  <h2 className="text-2xl font-bold mb-4 text-center">
-                    Cloudwall #{code}
-                  </h2>
-                  <div className="flex justify-center">
-                    <div className="bg-transparent p-3 rounded-lg">
-                      <QRCodeSVG 
-                        value={`${window.location.origin}/artwork/${code}`}
-                        size={200}
-                        fgColor="white"
-                        bgColor="transparent"
-                      />
+    <div className="min-h-screen bg-black text-white">
+      <Header />
+      <main className="pt-16 pb-20">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Object.entries(artworks).map(([code, artwork]) => (
+              <div key={code} className="relative aspect-square bg-black/30 rounded-2xl overflow-hidden">
+                <WordCloud words={artwork.words} isBlurred={artwork.isBlurred} />
+                <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${artwork.showQR ? 'opacity-100' : 'opacity-0'}`}>
+                  <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
+                    <h2 className="text-2xl font-bold mb-4 text-center">
+                      Artwork #{code}
+                    </h2>
+                    <div className="flex justify-center mb-4">
+                      <div className="bg-transparent p-3 rounded-lg">
+                        <QRCodeSVG 
+                          value={`${window.location.origin}/artwork/${code}`}
+                          size={150}
+                          fgColor="white"
+                          bgColor="transparent"
+                        />
+                      </div>
                     </div>
+                    <p className="text-center text-gray-300">
+                      Scan to add words
+                    </p>
                   </div>
-                  <p className="text-center text-gray-300 mt-4">
-                    Scan to view and add words
-                  </p>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </main>
+      <Footer />
       {error && (
         <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg">
           {error}
