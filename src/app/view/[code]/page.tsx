@@ -1,158 +1,125 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import { WordCloud } from '@/components/WordCloud';
-import { QRCodeSVG } from 'qrcode.react';
 import { wsService } from '@/services/websocket';
+import { QRCodeSVG } from 'qrcode.react';
 
-interface Word {
-  text: string;
-  value: number;
+interface PageProps {
+  params: {
+    code: string;
+  };
 }
 
-export default function ViewPage() {
-  const params = useParams();
-  const code = params.code as string;
-  const [words, setWords] = useState<Word[]>([]);
+export default function ViewPage({ params }: PageProps) {
+  const { code } = params;
+  const [words, setWords] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [fontLoaded, setFontLoaded] = useState(false);
   const [isBlurred, setIsBlurred] = useState(true);
   const [showQR, setShowQR] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [artworkUrl, setArtworkUrl] = useState('');
 
   useEffect(() => {
-    console.log('🔵 [ViewPage] Initializing with code:', code);
+    // Set artwork URL after component mounts
+    setArtworkUrl(`${window.location.origin}/artwork/${code}`);
+  }, [code]);
 
-    // Load font
-    document.fonts.load('1em "Titillium Web"').then(() => {
-      console.log('🔵 [ViewPage] Font loaded');
-      setFontLoaded(true);
-    });
-
-    // Fetch initial words
-    const fetchWords = async () => {
-      try {
-        console.log('🔵 [ViewPage] Fetching initial words');
-        const response = await fetch(`/api/words/${code}`);
-        if (!response.ok) throw new Error('Failed to fetch words');
-        const data = await response.json();
-        console.log('📥 [ViewPage] Received initial words:', data);
-        setWords(data.words);
-        setArtworkUrl(data.artworkUrl);
-      } catch (err) {
-        console.error('🔴 [ViewPage] Error fetching words:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch words');
-      }
-    };
-
-    fetchWords();
-
-    // Set up WebSocket connection
-    console.log('🔵 [ViewPage] Setting up WebSocket connection');
+  useEffect(() => {
+    console.log('Initializing WebSocket connection for code:', code);
+    // Connect as a view page
     wsService.connect(code, true);
+    return () => wsService.disconnect();
+  }, [code]);
 
-    // Handle WebSocket messages
+  useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       try {
-        console.log('📥 [ViewPage] Received WebSocket message:', event.data);
         const data = JSON.parse(event.data);
+        console.log('📥 [WebSocket v3] Received message:', data);
         
-        switch (data.type) {
-          case 'update_cloud':
-            if (data.words) {
-              console.log('📊 [ViewPage] Processing word update');
-              // Process words to count frequencies
-              const wordMap = new Map<string, number>();
-              data.words.forEach((word: string) => {
-                const normalizedWord = word.toLowerCase();
-                wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
-              });
-              
-              // Convert to array format for WordCloud component
-              const newWords = Array.from(wordMap.entries()).map(([text, value]) => ({
-                text,
-                value
-              }));
-              
-              console.log('✨ [ViewPage] Setting new words:', newWords);
-              setWords(newWords);
-              
-              // Fade out QR and unblur word cloud
-              setShowQR(false);
-              setIsBlurred(false);
-              
-              // After 3 seconds, blur word cloud and show QR again
-              setTimeout(() => {
-                setIsBlurred(true);
-                setShowQR(true);
-              }, 3000);
-            }
-            break;
+        if (data.type === 'update_cloud' && Array.isArray(data.words)) {
+          console.log('📊 [WebSocket v3] Words data:', data.words);
+          // Ensure we're setting an array of strings
+          const processedWords = data.words
+            .filter((word: unknown) => typeof word === 'string' && String(word).trim().length > 0)
+            .map((word: unknown) => String(word).trim());
+          console.log('✨ [WebSocket v3] Processed words:', processedWords);
+          setWords(processedWords);
+          setIsLoading(false);
 
-          case 'error':
-            console.error('🔴 [ViewPage] Received error:', data.message);
-            setError(data.message);
-            break;
+          // Only handle blur/QR effects if it's not the initial load and there's a new word
+          if (!isInitialLoad && data.newWord) {
+            // Hide QR and unblur
+            setShowQR(false);
+            setIsBlurred(false);
 
-          default:
-            console.log('ℹ️ [ViewPage] Received unknown message type:', data.type);
+            // After 3 seconds, show QR and blur again
+            setTimeout(() => {
+              setShowQR(true);
+              setIsBlurred(true);
+            }, 3000);
+          } else {
+            setIsInitialLoad(false);
+          }
+        } else if (data.type === 'error') {
+          setError(data.message);
+          setTimeout(() => setError(null), 3000);
         }
       } catch (error) {
-        console.error('🔴 [ViewPage] Error processing WebSocket message:', error);
-        setError('Failed to process message');
+        console.error('Error processing WebSocket message:', error);
+        setWords([]);
+        setIsLoading(false);
       }
     };
 
     wsService.addEventListener('message', handleMessage);
-
-    return () => {
-      console.log('🔵 [ViewPage] Cleaning up');
-      wsService.removeEventListener('message', handleMessage);
-      wsService.disconnect();
-    };
-  }, [code]);
-
-  if (!fontLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
-    );
-  }
+    return () => wsService.removeEventListener('message', handleMessage);
+  }, [isInitialLoad]);
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="relative w-full h-full">
-          <WordCloud words={words} isBlurred={isBlurred} />
-          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${showQR ? 'opacity-100' : 'opacity-0'}`}>
-            <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
-              <h1 className="text-3xl font-bold mb-6 text-center">
-                Scan to add words to the cloud
-              </h1>
-              <div className="flex justify-center mb-6">
-                <div className="bg-transparent p-3 rounded-lg">
-                  <QRCodeSVG 
-                    value={artworkUrl} 
-                    size={200} 
-                    fgColor="white"
-                    bgColor="transparent"
-                  />
-                </div>
-              </div>
-              <p className="text-center text-gray-300">
-                Scan this QR code with your phone to add words to the cloud
-              </p>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-black text-white p-4 sm:p-6 md:p-8">
+      {/* Word Cloud Container */}
+      <div 
+        className={`fixed inset-0 w-full h-screen transition-all duration-1000 ${
+          isBlurred ? 'blur-xl' : ''
+        }`}
+      >
+        <WordCloud words={words} />
       </div>
-      {error && (
-        <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg">
-          {error}
-        </div>
-      )}
+
+      {/* Content Overlay */}
+      <div className="relative z-40 flex flex-col items-center justify-center min-h-screen">
+        {/* QR Code Section */}
+        {showQR && artworkUrl && (
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 md:p-8 w-full max-w-md mx-auto mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-center">
+              Scansiona per aggiungere parole nel Cloudwall
+            </h1>
+            <div className="flex justify-center mb-4 sm:mb-6">
+              <div className="bg-transparent p-2 sm:p-3 rounded-lg">
+                <QRCodeSVG 
+                  value={artworkUrl} 
+                  size={200} 
+                  fgColor="white"
+                  bgColor="transparent"
+                />
+              </div>
+            </div>
+            <p className="text-sm sm:text-base text-center text-gray-300">
+              Scansiona questo codice QR con il tuo telefono per aggiungere parole nel Cloudwall
+            </p>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-50 bg-red-500/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+            {error}
+          </div>
+        )}
+      </div>
     </div>
   );
 } 

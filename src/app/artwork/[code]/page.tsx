@@ -1,180 +1,123 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import { WordCloud } from '@/components/WordCloud';
+import { QRCodeSVG } from 'qrcode.react';
 import { wsService } from '@/services/websocket';
 
-interface Word {
-  text: string;
-  value: number;
+interface PageProps {
+  params: {
+    code: string;
+  };
 }
 
-export default function ArtworkPage() {
-  const params = useParams();
-  const code = params.code as string;
-  const [words, setWords] = useState<Word[]>([]);
+export default function ArtworkPage({ params }: PageProps) {
+  const [words, setWords] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [artworkUrl, setArtworkUrl] = useState('');
   const [fontLoaded, setFontLoaded] = useState(false);
-  const [inputWord, setInputWord] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isBlurred, setIsBlurred] = useState(true);
-  const [showInput, setShowInput] = useState(true);
 
   useEffect(() => {
-    console.log('🔵 [ArtworkPage] Initializing with code:', code);
-
-    // Load font
-    document.fonts.load('1em "Titillium Web"').then(() => {
-      console.log('🔵 [ArtworkPage] Font loaded');
+    // Check if font is loaded
+    document.fonts.ready.then(() => {
+      console.log('Fonts loaded');
       setFontLoaded(true);
     });
+  }, []);
 
-    // Fetch initial words
-    const fetchWords = async () => {
-      try {
-        console.log('🔵 [ArtworkPage] Fetching initial words');
-        const response = await fetch(`/api/words/${code}`);
-        if (!response.ok) throw new Error('Failed to fetch words');
-        const data = await response.json();
-        console.log('📥 [ArtworkPage] Received initial words:', data);
-        setWords(data.words);
-      } catch (err) {
-        console.error('🔴 [ArtworkPage] Error fetching words:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch words');
-      }
-    };
-
-    fetchWords();
-
-    // Set up WebSocket connection
-    console.log('🔵 [ArtworkPage] Setting up WebSocket connection');
-    wsService.connect(code, false);
-
-    // Handle WebSocket messages
+  useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       try {
-        console.log('📥 [ArtworkPage] Received WebSocket message:', event.data);
         const data = JSON.parse(event.data);
-        
-        switch (data.type) {
-          case 'update_cloud':
-            if (data.words) {
-              console.log('📊 [ArtworkPage] Processing word update');
-              // Process words to count frequencies
-              const wordMap = new Map<string, number>();
-              data.words.forEach((word: string) => {
-                const normalizedWord = word.toLowerCase();
-                wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
-              });
-              
-              // Convert to array format for WordCloud component
-              const newWords = Array.from(wordMap.entries()).map(([text, value]) => ({
-                text,
-                value
-              }));
-              
-              console.log('✨ [ArtworkPage] Setting new words:', newWords);
-              setWords(newWords);
-            }
-            break;
+        console.log('Received message:', data);
 
-          case 'error':
-            console.error('🔴 [ArtworkPage] Received error:', data.message);
-            setError(data.message);
-            break;
-
-          default:
-            console.log('ℹ️ [ArtworkPage] Received unknown message type:', data.type);
+        if (data.type === 'update_cloud' && data.artworkCode === params.code) {
+          setWords(prev => [...prev, data.word]);
+        } else if (data.type === 'error') {
+          setError(data.message);
+          setTimeout(() => setError(null), 3000);
+        } else if (data.type === 'artwork_url') {
+          setArtworkUrl(data.url);
         }
       } catch (error) {
-        console.error('🔴 [ArtworkPage] Error processing WebSocket message:', error);
-        setError('Failed to process message');
+        console.error('Error parsing message:', error);
       }
     };
 
     wsService.addEventListener('message', handleMessage);
+    return () => wsService.removeEventListener('message', handleMessage);
+  }, [isInitialLoad, params.code]);
 
-    return () => {
-      console.log('🔵 [ArtworkPage] Cleaning up');
-      wsService.removeEventListener('message', handleMessage);
-      wsService.disconnect();
+  useEffect(() => {
+    const fetchWords = async () => {
+      try {
+        const response = await fetch('https://qr-word-cloud-be.onrender.com/api/words/all');
+        if (!response.ok) {
+          throw new Error('Failed to fetch words');
+        }
+        const data = await response.json();
+        setWords(data[params.code] || []);
+      } catch (err) {
+        setError('Errore nel caricamento delle parole');
+        console.error('Error fetching words:', err);
+      } finally {
+        setIsInitialLoad(false);
+      }
     };
-  }, [code]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputWord.trim() || isSubmitting) return;
+    fetchWords();
+  }, [params.code]);
 
-    setIsSubmitting(true);
-    try {
-      console.log('📤 [ArtworkPage] Sending word:', inputWord);
-      wsService.sendWord(inputWord.trim());
-      setInputWord('');
-      
-      // Fade out input and unblur word cloud
-      setShowInput(false);
-      setIsBlurred(false);
-      
-      // After 3 seconds, blur word cloud and show input again
-      setTimeout(() => {
-        setIsBlurred(true);
-        setShowInput(true);
-      }, 3000);
-    } catch (err) {
-      console.error('🔴 [ArtworkPage] Error sending word:', err);
-      setError('Failed to send word');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (!fontLoaded) {
+  if (isInitialLoad || !fontLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white text-2xl animate-pulse">
+          Caricamento opera...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="relative w-full h-full">
-          <WordCloud words={words} isBlurred={isBlurred} />
-          <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${showInput ? 'opacity-100' : 'opacity-0'}`}>
-            <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
-              <h1 className="text-3xl font-bold mb-6 text-center">
-                Add a word to the cloud
+    <div className="min-h-screen bg-black p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          {/* Word Cloud */}
+          <div className="relative w-full aspect-square bg-black/30 backdrop-blur-sm rounded-2xl overflow-hidden">
+            <WordCloud words={words} />
+          </div>
+
+          {/* QR Code */}
+          {artworkUrl && (
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 md:p-8 w-full max-w-md mx-auto">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-center">
+                Scansiona per aggiungere parole nel Cloudwall
               </h1>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <input
-                    type="text"
-                    value={inputWord}
-                    onChange={(e) => setInputWord(e.target.value)}
-                    placeholder="Enter a word..."
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-                    disabled={isSubmitting}
+              <div className="flex justify-center mb-4 sm:mb-6">
+                <div className="bg-transparent p-2 sm:p-3 rounded-lg">
+                  <QRCodeSVG 
+                    value={artworkUrl} 
+                    size={200} 
+                    fgColor="white"
+                    bgColor="transparent"
                   />
                 </div>
-                <button
-                  type="submit"
-                  disabled={!inputWord.trim() || isSubmitting}
-                  className="w-full px-4 py-3 bg-white text-black rounded-lg font-medium hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? 'Adding...' : 'Add Word'}
-                </button>
-              </form>
+              </div>
+              <p className="text-sm sm:text-base text-center text-gray-300">
+                Scansiona questo codice QR con il tuo telefono per aggiungere parole nel Cloudwall
+              </p>
             </div>
-          </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-50 bg-red-500/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+              {error}
+            </div>
+          )}
         </div>
       </div>
-      {error && (
-        <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg">
-          {error}
-        </div>
-      )}
     </div>
   );
 } 
