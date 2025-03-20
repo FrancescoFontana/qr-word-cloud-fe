@@ -154,7 +154,7 @@ export default function ArtworkPage() {
               <div className="w-full max-w-md px-4">
                 <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8">
                   <h1 className="text-xl font-light italic mb-6 text-left">
-                    "Lascia una parola o un concetto"
+                    Lascia una parola o un concetto
                   </h1>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
