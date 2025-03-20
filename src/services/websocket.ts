@@ -33,6 +33,7 @@ export class WebSocketService {
   private keepAliveInterval: NodeJS.Timeout | null = null;
   private isViewPage: boolean = false;
   private messageHandlers: Map<string, ((data: any) => void)[]> = new Map();
+  private currentCode: string | null = null;
 
   constructor(private url: string) {}
 
@@ -54,23 +55,27 @@ export class WebSocketService {
   }
 
   connect(code: string, isViewPage: boolean = false) {
-    if (this.ws?.readyState === WebSocket.OPEN) {
+    if (this.ws?.readyState === WebSocket.OPEN && this.currentCode === code) {
       return;
     }
 
+    if (this.ws) {
+      this.disconnect();
+    }
+
     this.isViewPage = isViewPage;
+    this.currentCode = code;
     console.log('🔵 [WebSocket v3] Initializing connection to:', this.url);
     this.ws = new WebSocket(this.url);
     this.setupEventListeners(code);
     this.reconnectAttempts = 0;
     this.isInitialLoad = true;
 
-    // Start keep-alive interval
     this.keepAliveInterval = setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify({ type: 'ping' }));
       }
-    }, 30000); // Send ping every 30 seconds
+    }, 30000);
   }
 
   private updateWordCloud() {
@@ -99,13 +104,11 @@ export class WebSocketService {
       console.log('📥 [WebSocket v3] Received message:', event.data);
       const data = JSON.parse(event.data);
       
-      // Call registered message handlers
       this.messageHandlers.get('message')?.forEach(handler => handler(event));
       
       switch (data.type) {
         case 'update_cloud':
           if (data.words) {
-            // Clear the word map and update with new words
             this.wordMap.clear();
             data.words.forEach((word: string) => {
               const normalizedWord = word.toLowerCase();
@@ -113,20 +116,16 @@ export class WebSocketService {
             });
             this.updateWordCloud();
             
-            // Handle blur state based on page type and newWord field
             if (data.newWord) {
               if (this.isViewPage) {
-                // On view page, unblur for 3 seconds when new word arrives
                 useWordCloudStore.getState().setBlurred(false);
                 setTimeout(() => {
                   useWordCloudStore.getState().setBlurred(true);
                 }, 3000);
               } else {
-                // On artwork page, unblur and stay unblurred when new word arrives
                 useWordCloudStore.getState().setBlurred(false);
               }
             } else if (!this.isInitialLoad) {
-              // For non-new-word updates, only unblur if not initial load
               useWordCloudStore.getState().setBlurred(false);
               if (this.isViewPage) {
                 setTimeout(() => {
@@ -150,7 +149,6 @@ export class WebSocketService {
 
     this.ws.onerror = (error) => {
       console.error('WebSocket error:', error);
-      // Log additional connection state information
       if (this.ws) {
         console.log('WebSocket state:', {
           readyState: this.ws.readyState,
@@ -181,15 +179,16 @@ export class WebSocketService {
       this.ws.close();
       this.ws = null;
       this.wordMap.clear();
+      this.currentCode = null;
     }
   }
 
   sendWord(word: string) {
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.isInitialLoad = false; // Mark that we're no longer in initial load
+      this.isInitialLoad = false;
       const message = { 
         type: 'send_word', 
-        word: word.toLowerCase() // Normalize to lowercase before sending
+        word: word.toLowerCase()
       };
       console.log('📤 [WebSocket v3] Sending word message:', message);
       this.ws.send(JSON.stringify(message));
