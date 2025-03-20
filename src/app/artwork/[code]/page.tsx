@@ -164,8 +164,8 @@ export default function ArtworkPage() {
             <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${showInput ? 'opacity-100' : 'opacity-0'}`}>
               <div className="w-full max-w-md px-4">
                 <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8">
-                  <h1 className="text-2xl font-light italic mb-6 text-center">
-                    "Lascia una parola o un concetto"
+                  <h1 className="text-xl font-light italic mb-6 text-center">
+                    Lascia una parola o un concetto
                   </h1>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
