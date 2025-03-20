@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import ReactWordcloud from 'react-wordcloud';
-import 'tippy.js/dist/tippy.css';
-import 'tippy.js/animations/scale.css';
+import ReactWordCloud from 'react-d3-cloud';
+import { scaleOrdinal } from 'd3-scale';
+import { schemeCategory10 } from 'd3-scale-chromatic';
 
 interface WordCloudProps {
   words: string[];
+}
+
+interface WordCloudData {
+  text: string;
+  value: number;
 }
 
 export function WordCloud({ words }: WordCloudProps) {
@@ -50,42 +55,28 @@ export function WordCloud({ words }: WordCloudProps) {
   }, {} as Record<string, number>);
 
   // Convert to word cloud format and sort by frequency
-  const wordCloudData = Object.entries(wordCounts)
+  const data: WordCloudData[] = Object.entries(wordCounts)
     .map(([text, value]) => ({ text, value }))
     .sort((a, b) => b.value - a.value);
 
   // Calculate font size based on number of words
   const minFontSize = 20;
   const maxFontSize = 80;
-  const totalWords = wordCloudData.length;
-  const fontSizeRange = maxFontSize - minFontSize;
-  const fontSizeStep = fontSizeRange / Math.max(totalWords, 1);
-
-  const options = {
-    rotations: 2,
-    rotationAngles: [0, 90],
-    fontSizes: [minFontSize, maxFontSize],
-    padding: 5,
-    fontFamily: 'Titillium Web, sans-serif',
-    colors: ['#ffffff'],
-    enableTooltip: true,
-    deterministic: true,
-    width: dimensions.width,
-    height: dimensions.height,
-    minFontSize,
-    maxFontSize,
-    spiral: 'archimedean',
-    tooltipOptions: {
-      theme: 'dark',
-      placement: 'top',
-      animation: 'scale',
-    },
-  };
+  const totalWords = data.length;
 
   return (
     <div ref={containerRef} className="w-full h-full">
-      {wordCloudData.length > 0 ? (
-        <ReactWordcloud words={wordCloudData} options={options} />
+      {data.length > 0 ? (
+        <ReactWordCloud
+          data={data}
+          width={dimensions.width}
+          height={dimensions.height}
+          font="Titillium Web"
+          fontSize={(word) => Math.max(minFontSize, Math.min(maxFontSize, minFontSize + word.value * 10))}
+          padding={5}
+          rotate={0}
+          fill={() => '#ffffff'}
+        />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
           <div className="text-white text-xl">No words yet</div>
