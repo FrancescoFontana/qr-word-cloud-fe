@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { WordCloud } from '@/components/WordCloud';
+import { QRCodeSVG } from 'qrcode.react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { QRCodeSVG } from 'qrcode.react';
 import { wsService } from '@/services/websocket';
 
 interface Word {
@@ -78,6 +78,12 @@ export default function GalleryPage() {
         });
 
         setArtworks(newArtworks);
+
+        // Connect to WebSocket for each artwork code
+        Object.keys(newArtworks).forEach(code => {
+          console.log('🔵 [GalleryPage] Setting up WebSocket connection for code:', code);
+          wsService.connect(code, false);
+        });
       } catch (err) {
         console.error('🔴 [GalleryPage] Error fetching words:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch words');
@@ -85,115 +91,84 @@ export default function GalleryPage() {
     };
 
     fetchWords();
-  }, []);
 
-  // Handle WebSocket messages
-  const handleMessage = (event: MessageEvent) => {
-    try {
-      console.log('📥 [GalleryPage] Received WebSocket message:', event.data);
-      const data: WebSocketMessage = JSON.parse(event.data);
-      
-      switch (data.type) {
-        case 'update_cloud':
-          if (data.artworkCode) {
-            console.log('📊 [GalleryPage] Processing word update for code:', data.artworkCode);
-            
-            // First, update the words and hide QR code
-            setArtworks(prev => ({
-              ...prev,
-              [data.artworkCode]: {
-                ...prev[data.artworkCode],
-                isBlurred: false,
-                showQR: false
-              }
-            }));
-            
-            // After 3 seconds, blur word cloud and show QR code again
-            setTimeout(() => {
+    // Handle WebSocket messages
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        console.log('📥 [GalleryPage] Received WebSocket message:', event.data);
+        const data: WebSocketMessage = JSON.parse(event.data);
+        
+        switch (data.type) {
+          case 'update_cloud':
+            if (data.artworkCode) {
+              console.log('📊 [GalleryPage] Processing word update for code:', data.artworkCode);
+              
+              // First, update the words and hide QR code
               setArtworks(prev => ({
                 ...prev,
                 [data.artworkCode]: {
                   ...prev[data.artworkCode],
+                  isBlurred: false,
+                  showQR: false
+                }
+              }));
+              
+              // After 3 seconds, blur word cloud and show QR code again
+              setTimeout(() => {
+                setArtworks(prev => ({
+                  ...prev,
+                  [data.artworkCode]: {
+                    ...prev[data.artworkCode],
+                    isBlurred: true,
+                    showQR: true
+                  }
+                }));
+              }, 3000);
+            }
+            break;
+
+          case 'new_artwork':
+            if (data.artworkCode && data.codes) {
+              console.log('🎨 [GalleryPage] Processing new artwork:', data.artworkCode);
+              // Initialize new artwork with empty words
+              setArtworks(prev => ({
+                ...prev,
+                [data.artworkCode]: {
+                  words: [],
                   isBlurred: true,
                   showQR: true
                 }
               }));
-            }, 3000);
-          }
-          break;
+            }
+            break;
 
-        case 'new_artwork':
-          if (data.artworkCode && data.codes) {
-            console.log('🎨 [GalleryPage] Processing new artwork:', data.artworkCode);
-            // Initialize new artwork with empty words
-            setArtworks(prev => ({
-              ...prev,
-              [data.artworkCode]: {
-                words: [],
-                isBlurred: true,
-                showQR: true
-              }
-            }));
-          }
-          break;
+          case 'error':
+            console.error('🔴 [GalleryPage] WebSocket error:', data);
+            setError('Connection error occurred');
+            break;
 
-        case 'error':
-          console.error('🔴 [GalleryPage] WebSocket error:', data);
-          setError('Connection error occurred');
-          break;
-
-        default:
-          console.warn('⚠️ [GalleryPage] Unknown message type:', data.type);
+          default:
+            console.warn('⚠️ [GalleryPage] Unknown message type:', data.type);
+        }
+      } catch (error) {
+        console.error('🔴 [GalleryPage] Error processing WebSocket message:', error);
+        setError('Failed to process message');
       }
-    } catch (error) {
-      console.error('🔴 [GalleryPage] Error processing WebSocket message:', error);
-      setError('Failed to process message');
-    }
-  };
-
-  // Set up WebSocket connections for each artwork code
-  useEffect(() => {
-    if (Object.keys(artworks).length === 0) return;
-
-    console.log('🔌 [GalleryPage] Setting up WebSocket connections for codes:', Object.keys(artworks));
-    
-    // Create WebSocket connection
-    const ws = new WebSocket('wss://qr-word-cloud-be.onrender.com/ws');
-    
-    ws.onopen = () => {
-      console.log('✅ [GalleryPage] WebSocket connected');
-      // Join all artwork channels
-      Object.keys(artworks).forEach(code => {
-        const joinMessage = {
-          type: 'join',
-          code: code
-        };
-        console.log('📤 [GalleryPage] Joining channel:', code);
-        ws.send(JSON.stringify(joinMessage));
-      });
     };
 
-    ws.onmessage = handleMessage;
-
-    ws.onerror = (error) => {
-      console.error('🔴 [GalleryPage] WebSocket error:', error);
-      setError('Connection error occurred');
-    };
-
-    ws.onclose = () => {
-      console.log('🔌 [GalleryPage] WebSocket disconnected');
-    };
+    wsService.addEventListener('message', handleMessage);
 
     return () => {
-      console.log('🧹 [GalleryPage] Cleaning up WebSocket connection');
-      ws.close();
+      console.log('🔵 [GalleryPage] Cleaning up');
+      wsService.removeEventListener('message', handleMessage);
+      wsService.disconnect();
     };
-  }, [artworks]);
+  }, []);
 
   if (!fontLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
       </div>
     );
   }
