@@ -34,6 +34,7 @@ export class WebSocketService {
   private isViewPage: boolean = false;
   private messageHandlers: Map<string, ((data: any) => void)[]> = new Map();
   private currentCode: string | null = null;
+  private connectedCodes: Set<string> = new Set();
 
   constructor(private url: string) {}
 
@@ -55,27 +56,43 @@ export class WebSocketService {
   }
 
   connect(code: string, isViewPage: boolean = false) {
-    if (this.ws?.readyState === WebSocket.OPEN && this.currentCode === code) {
+    if (this.connectedCodes.has(code)) {
+      console.log('🔵 [WebSocket v3] Already connected to code:', code);
       return;
     }
 
-    if (this.ws) {
-      this.disconnect();
+    if (!this.ws) {
+      console.log('🔵 [WebSocket v3] Initializing connection to:', this.url);
+      this.ws = new WebSocket(this.url);
+      this.setupEventListeners();
+      this.reconnectAttempts = 0;
+      this.isInitialLoad = true;
+
+      this.keepAliveInterval = setInterval(() => {
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 30000);
     }
 
-    this.isViewPage = isViewPage;
+    this.connectedCodes.add(code);
     this.currentCode = code;
-    console.log('🔵 [WebSocket v3] Initializing connection to:', this.url);
-    this.ws = new WebSocket(this.url);
-    this.setupEventListeners(code);
-    this.reconnectAttempts = 0;
-    this.isInitialLoad = true;
+    this.isViewPage = isViewPage;
 
-    this.keepAliveInterval = setInterval(() => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: 'ping' }));
-      }
-    }, 30000);
+    if (this.ws.readyState === WebSocket.OPEN) {
+      this.sendJoinMessage(code);
+    }
+  }
+
+  private sendJoinMessage(code: string) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+    const message = { 
+      type: 'join_artwork', 
+      artworkCode: code 
+    };
+    console.log('📤 [WebSocket v3] Sending join message:', message);
+    this.ws.send(JSON.stringify(message));
   }
 
   private updateWordCloud() {
@@ -86,18 +103,16 @@ export class WebSocketService {
     useWordCloudStore.getState().setWords(words);
   }
 
-  private setupEventListeners(code: string) {
+  private setupEventListeners() {
     if (!this.ws) return;
 
     this.ws.onopen = () => {
-      console.log('🟢 [WebSocket v3] Connected, sending join_artwork message');
+      console.log('🟢 [WebSocket v3] Connected');
       this.reconnectAttempts = 0;
-      const message = { 
-        type: 'join_artwork', 
-        artworkCode: code 
-      };
-      console.log('📤 [WebSocket v3] Sending message:', message);
-      this.ws?.send(JSON.stringify(message));
+      
+      this.connectedCodes.forEach(code => {
+        this.sendJoinMessage(code);
+      });
     };
 
     this.ws.onmessage = (event) => {
@@ -144,7 +159,7 @@ export class WebSocketService {
 
     this.ws.onclose = (event) => {
       console.log(`WebSocket disconnected with code ${event.code} and reason: ${event.reason}`);
-      this.handleReconnect(code);
+      this.handleReconnect();
     };
 
     this.ws.onerror = (error) => {
@@ -156,16 +171,16 @@ export class WebSocketService {
           protocol: this.ws.protocol
         });
       }
-      this.handleReconnect(code);
+      this.handleReconnect();
     };
   }
 
-  private handleReconnect(code: string) {
+  private handleReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       setTimeout(() => {
         console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-        this.connect(code);
+        this.connect(this.currentCode || '', this.isViewPage);
       }, this.reconnectTimeout * this.reconnectAttempts);
     }
   }
@@ -180,6 +195,7 @@ export class WebSocketService {
       this.ws = null;
       this.wordMap.clear();
       this.currentCode = null;
+      this.connectedCodes.clear();
     }
   }
 
