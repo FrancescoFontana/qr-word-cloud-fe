@@ -48,6 +48,7 @@ export default function GalleryPage() {
   const [error, setError] = useState<string | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
   const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
+  const updateInProgressRef = useRef<{ [key: string]: boolean }>({});
 
   // Load font and fetch initial data
   useEffect(() => {
@@ -115,8 +116,18 @@ export default function GalleryPage() {
             if (data.artworkCode && data.words) {
               console.log('📊 [GalleryPage] Processing word update for code:', data.artworkCode);
               
+              // Skip if an update is already in progress for this artwork
+              if (updateInProgressRef.current[data.artworkCode]) {
+                console.log('⏭️ [GalleryPage] Skipping update - already in progress for code:', data.artworkCode);
+                return;
+              }
+              
+              // Mark this artwork as having an update in progress
+              updateInProgressRef.current[data.artworkCode] = true;
+              
               // Clear any existing timeout for this artwork
               if (timeoutsRef.current[data.artworkCode]) {
+                console.log('🧹 [GalleryPage] Clearing existing timeout for code:', data.artworkCode);
                 clearTimeout(timeoutsRef.current[data.artworkCode]);
                 delete timeoutsRef.current[data.artworkCode];
               }
@@ -146,6 +157,7 @@ export default function GalleryPage() {
               
               // After 3 seconds, blur word cloud and show QR code again
               timeoutsRef.current[data.artworkCode] = setTimeout(() => {
+                console.log('⏰ [GalleryPage] Timeout triggered for code:', data.artworkCode);
                 setArtworks(prev => ({
                   ...prev,
                   [data.artworkCode]: {
@@ -154,6 +166,8 @@ export default function GalleryPage() {
                     showQR: true
                   }
                 }));
+                // Clear the update in progress flag
+                delete updateInProgressRef.current[data.artworkCode];
               }, 3000);
             }
             break;
