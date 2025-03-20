@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import ReactWordcloud from 'react-d3-cloud';
-import 'tippy.js/dist/tippy.css';
-import 'tippy.js/animations/scale.css';
 
 interface Word {
   text: string;
@@ -18,16 +16,6 @@ interface WordCloudProps {
 export default function WordCloud({ words, isBlurred = false }: WordCloudProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [fontLoaded, setFontLoaded] = useState(false);
-
-  // Load the font
-  useEffect(() => {
-    const font = new FontFace('Titillium Web', 'url(https://fonts.gstatic.com/s/titilliumweb/v15/NaPecZTIAOhVxoMyOr9n_E7fdMPmCA.ttf)');
-    font.load().then(() => {
-      document.fonts.add(font);
-      setFontLoaded(true);
-    });
-  }, []);
 
   // Update dimensions when container size changes
   useEffect(() => {
@@ -42,10 +30,6 @@ export default function WordCloud({ words, isBlurred = false }: WordCloudProps) 
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
-
-  if (!fontLoaded) {
-    return <div className="w-full h-full flex items-center justify-center">Loading...</div>;
-  }
 
   return (
     <div 
