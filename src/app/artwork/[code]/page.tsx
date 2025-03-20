@@ -33,7 +33,7 @@ export default function ArtworkPage() {
   const [showInput, setShowInput] = useState(true);
 
   useEffect(() => {
-    console.log('🔵 [ArtworkPage] Initializing');
+    console.log('🔵 [ArtworkPage] Initializing with code:', code);
 
     // Load font
     document.fonts.load('1em "Titillium Web"').then(() => {
@@ -41,8 +41,38 @@ export default function ArtworkPage() {
       setFontLoaded(true);
     });
 
-    // Connect to WebSocket
-    console.log('🔵 [ArtworkPage] Setting up WebSocket connection for code:', code);
+    // Fetch initial words
+    const fetchWords = async () => {
+      try {
+        console.log('🔵 [ArtworkPage] Fetching initial words');
+        const response = await fetch(`/api/words/${code}`);
+        if (!response.ok) throw new Error('Failed to fetch words');
+        const data = await response.json();
+        console.log('📥 [ArtworkPage] Received initial words:', data);
+
+        // Convert string array to Word array
+        const wordMap = new Map<string, number>();
+        data.words.forEach((word: string) => {
+          const normalizedWord = word.toLowerCase();
+          wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
+        });
+        
+        const wordArray: Word[] = Array.from(wordMap.entries()).map(([text, value]) => ({
+          text,
+          value
+        }));
+
+        setWords(wordArray);
+      } catch (err) {
+        console.error('🔴 [ArtworkPage] Error fetching words:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch words');
+      }
+    };
+
+    fetchWords();
+
+    // Set up WebSocket connection
+    console.log('🔵 [ArtworkPage] Setting up WebSocket connection');
     wsService.connect(code, false);
 
     // Handle WebSocket messages
@@ -132,29 +162,31 @@ export default function ArtworkPage() {
           <div className="relative w-full h-full">
             <WordCloud words={words} isBlurred={isBlurred} />
             <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${showInput ? 'opacity-100' : 'opacity-0'}`}>
-              <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
-                <h1 className="text-3xl font-bold mb-6 text-center">
-                  Lascia una parola o un concetto
-                </h1>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <input
-                      type="text"
-                      value={inputWord}
-                      onChange={(e) => setInputWord(e.target.value)}
-                      placeholder="Inserisci qui"
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={!inputWord.trim() || isSubmitting}
-                    className="w-full px-4 py-3 bg-white text-black rounded-lg font-medium hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? 'Adding...' : 'Invia al CloudWall'}
-                  </button>
-                </form>
+              <div className="w-full max-w-md px-4">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8">
+                  <h1 className="text-2xl font-light italic mb-6 text-center">
+                    "Lascia una parola o un concetto"
+                  </h1>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <input
+                        type="text"
+                        value={inputWord}
+                        onChange={(e) => setInputWord(e.target.value)}
+                        placeholder="Inserisci qui"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={!inputWord.trim() || isSubmitting}
+                      className="w-full px-4 py-3 bg-white text-black rounded-lg font-medium hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? 'Adding...' : 'Invia al CloudWall'}
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
