@@ -49,6 +49,7 @@ export default function GalleryPage() {
   const [fontLoaded, setFontLoaded] = useState(false);
   const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const updateInProgressRef = useRef<{ [key: string]: boolean }>({});
+  const connectedCodesRef = useRef<Set<string>>(new Set());
 
   // Load font and fetch initial data
   useEffect(() => {
@@ -92,10 +93,13 @@ export default function GalleryPage() {
 
         setArtworks(newArtworks);
 
-        // Connect to WebSocket for each artwork code
+        // Connect to WebSocket for each artwork code that isn't already connected
         Object.keys(newArtworks).forEach(code => {
-          console.log('🔵 [GalleryPage] Setting up WebSocket connection for code:', code);
-          wsService.connect(code, false);
+          if (!connectedCodesRef.current.has(code)) {
+            console.log('🔵 [GalleryPage] Setting up WebSocket connection for code:', code);
+            wsService.connect(code, false);
+            connectedCodesRef.current.add(code);
+          }
         });
       } catch (err) {
         console.error('🔴 [GalleryPage] Error fetching words:', err);
@@ -184,8 +188,12 @@ export default function GalleryPage() {
                   showQR: true
                 }
               }));
-              // Connect to the new artwork's WebSocket
-              wsService.connect(data.artworkCode, false);
+              // Connect to the new artwork's WebSocket only if not already connected
+              if (!connectedCodesRef.current.has(data.artworkCode)) {
+                console.log('🔵 [GalleryPage] Setting up WebSocket connection for new artwork:', data.artworkCode);
+                wsService.connect(data.artworkCode, false);
+                connectedCodesRef.current.add(data.artworkCode);
+              }
             }
             break;
 
@@ -212,6 +220,9 @@ export default function GalleryPage() {
       
       // Clear all timeouts on unmount
       Object.values(timeoutsRef.current).forEach(timeout => clearTimeout(timeout));
+      
+      // Clear connected codes set
+      connectedCodesRef.current.clear();
     };
   }, []);
 
