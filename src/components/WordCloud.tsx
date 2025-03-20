@@ -68,7 +68,11 @@ export function WordCloud({ words, isBlurred = false }: WordCloudProps) {
   const numWords = words.length;
 
   return (
-    <div className="w-full h-full" style={{ position: 'relative' }}>
+    <div 
+      ref={containerRef} 
+      className={`w-full h-full transition-opacity duration-500 ${isBlurred ? 'opacity-50' : 'opacity-100'}`}
+      style={{ minHeight: '300px', position: 'relative' }}
+    >
       <ReactWordcloud
         data={words}
         width={dimensions.width}
