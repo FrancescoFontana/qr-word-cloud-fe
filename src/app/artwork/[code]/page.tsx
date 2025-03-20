@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { WordCloud } from '@/components/WordCloud';
-import { QRCodeSVG } from 'qrcode.react';
 import { wsService } from '@/services/websocket';
 
 interface Word {
@@ -17,6 +16,8 @@ export default function ArtworkPage() {
   const [words, setWords] = useState<Word[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
+  const [inputWord, setInputWord] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     console.log('🔵 [ArtworkPage] Initializing with code:', code);
@@ -99,6 +100,23 @@ export default function ArtworkPage() {
     };
   }, [code]);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputWord.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      console.log('📤 [ArtworkPage] Sending word:', inputWord);
+      wsService.sendWord(inputWord.trim());
+      setInputWord('');
+    } catch (err) {
+      console.error('🔴 [ArtworkPage] Error sending word:', err);
+      setError('Failed to send word');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (!fontLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -115,15 +133,29 @@ export default function ArtworkPage() {
             <WordCloud words={words} />
           </div>
           <div className="flex items-center justify-center">
-            <div className="bg-transparent p-4 rounded-lg">
-              <QRCodeSVG
-                value={`${process.env.NEXT_PUBLIC_BASE_URL}/view/${code}`}
-                size={400}
-                level="H"
-                includeMargin={true}
-                fgColor="white"
-                bgColor="transparent"
-              />
+            <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
+              <h1 className="text-3xl font-bold mb-6 text-center">
+                Add a word to the cloud
+              </h1>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <input
+                    type="text"
+                    value={inputWord}
+                    onChange={(e) => setInputWord(e.target.value)}
+                    placeholder="Enter a word..."
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={!inputWord.trim() || isSubmitting}
+                  className="w-full px-4 py-3 bg-white text-black rounded-lg font-medium hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Adding...' : 'Add Word'}
+                </button>
+              </form>
             </div>
           </div>
         </div>
