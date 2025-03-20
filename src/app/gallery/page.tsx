@@ -193,7 +193,10 @@ export default function GalleryPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      <main className="flex-1 flex items-center justify-center py-16">
+      <main className="flex-1 flex flex-col items-center justify-center py-16">
+        <div className="text-3xl font-light italic mb-12 text-center">
+          "Send a word in the Cloud"
+        </div>
         <div className="container mx-auto px-4">
           <div className="flex flex-nowrap overflow-x-auto gap-8 pb-4">
             {Object.entries(artworks).map(([code, artwork]) => (
