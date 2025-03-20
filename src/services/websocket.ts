@@ -33,13 +33,17 @@ export class WebSocketService {
   private isViewPage: boolean = false;
   private messageHandlers: ((event: MessageEvent) => void)[] = [];
 
-  constructor(private url: string) {}
+  constructor(private url: string) {
+    console.log('🔵 [WebSocket] Service initialized with URL:', url);
+  }
 
   addEventListener(type: string, handler: (event: MessageEvent) => void) {
+    console.log('🔵 [WebSocket] Adding message handler');
     this.messageHandlers.push(handler);
   }
 
   removeEventListener(type: string, handler: (event: MessageEvent) => void) {
+    console.log('🔵 [WebSocket] Removing message handler');
     const index = this.messageHandlers.indexOf(handler);
     if (index !== -1) {
       this.messageHandlers.splice(index, 1);
@@ -47,56 +51,79 @@ export class WebSocketService {
   }
 
   connect(code: string, isViewPage: boolean = false) {
+    console.log('🔵 [WebSocket] Connecting with code:', code, 'isViewPage:', isViewPage);
+    
     if (this.ws?.readyState === WebSocket.OPEN) {
+      console.log('🔵 [WebSocket] Connection already open, skipping');
       return;
     }
 
     this.isViewPage = isViewPage;
-    console.log('🔵 [WebSocket v3] Initializing connection to:', this.url);
-    this.ws = new WebSocket(this.url);
-    this.setupEventListeners(code);
-    this.reconnectAttempts = 0;
-    this.isInitialLoad = true;
+    console.log('🔵 [WebSocket] Creating new WebSocket connection to:', this.url);
+    
+    try {
+      this.ws = new WebSocket(this.url);
+      this.setupEventListeners(code);
+      this.reconnectAttempts = 0;
+      this.isInitialLoad = true;
 
-    // Start keep-alive interval
-    this.keepAliveInterval = setInterval(() => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: 'ping' }));
-      }
-    }, 30000); // Send ping every 30 seconds
+      // Start keep-alive interval
+      this.keepAliveInterval = setInterval(() => {
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          console.log('🔵 [WebSocket] Sending keep-alive ping');
+          this.ws.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 30000); // Send ping every 30 seconds
+    } catch (error) {
+      console.error('🔴 [WebSocket] Error creating WebSocket:', error);
+      this.handleReconnect(code);
+    }
   }
 
   private setupEventListeners(code: string) {
-    if (!this.ws) return;
+    if (!this.ws) {
+      console.error('🔴 [WebSocket] Cannot setup event listeners: WebSocket is null');
+      return;
+    }
 
     this.ws.onopen = () => {
-      console.log('🟢 [WebSocket v3] Connected, sending join_artwork message');
+      console.log('🟢 [WebSocket] Connection opened');
       this.reconnectAttempts = 0;
       const message = { 
         type: 'join_artwork', 
         artworkCode: code 
       };
-      console.log('📤 [WebSocket v3] Sending message:', message);
+      console.log('📤 [WebSocket] Sending join message:', message);
       this.ws?.send(JSON.stringify(message));
     };
 
     this.ws.onmessage = (event) => {
-      console.log('📥 [WebSocket v3] Received message:', event.data);
+      console.log('📥 [WebSocket] Received message:', event.data);
       
-      // Call registered message handlers
-      this.messageHandlers.forEach(handler => handler(event));
+      try {
+        // Call registered message handlers
+        this.messageHandlers.forEach(handler => {
+          try {
+            handler(event);
+          } catch (error) {
+            console.error('🔴 [WebSocket] Error in message handler:', error);
+          }
+        });
+      } catch (error) {
+        console.error('🔴 [WebSocket] Error processing message:', error);
+      }
     };
 
     this.ws.onclose = (event) => {
-      console.log(`WebSocket disconnected with code ${event.code} and reason: ${event.reason}`);
+      console.log(`🔴 [WebSocket] Connection closed with code ${event.code} and reason: ${event.reason}`);
       this.handleReconnect(code);
     };
 
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error('🔴 [WebSocket] WebSocket error:', error);
       // Log additional connection state information
       if (this.ws) {
-        console.log('WebSocket state:', {
+        console.log('🔴 [WebSocket] Connection state:', {
           readyState: this.ws.readyState,
           url: this.ws.url,
           protocol: this.ws.protocol
@@ -109,14 +136,18 @@ export class WebSocketService {
   private handleReconnect(code: string) {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
+      const delay = this.reconnectTimeout * this.reconnectAttempts;
+      console.log(`🔄 [WebSocket] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`);
       setTimeout(() => {
-        console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
         this.connect(code);
-      }, this.reconnectTimeout * this.reconnectAttempts);
+      }, delay);
+    } else {
+      console.error('🔴 [WebSocket] Max reconnection attempts reached');
     }
   }
 
   disconnect() {
+    console.log('🔵 [WebSocket] Disconnecting');
     if (this.keepAliveInterval) {
       clearInterval(this.keepAliveInterval);
       this.keepAliveInterval = null;
@@ -134,10 +165,13 @@ export class WebSocketService {
         type: 'send_word', 
         word: word.toLowerCase() // Normalize to lowercase before sending
       };
-      console.log('📤 [WebSocket v3] Sending word message:', message);
+      console.log('📤 [WebSocket] Sending word message:', message);
       this.ws.send(JSON.stringify(message));
+    } else {
+      console.error('🔴 [WebSocket] Cannot send word: WebSocket is not open');
     }
   }
 }
 
+// Create and export a singleton instance
 export const wsService = new WebSocketService(process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws'); 
