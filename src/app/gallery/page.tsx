@@ -245,7 +245,7 @@ export default function GalleryPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {Object.entries(artworks).map(([code, artwork]) => (
               <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
-                <div className="absolute inset-0">
+                <div className="absolute inset-0 h-full">
                   <WordCloud words={artwork.words} isBlurred={artwork.isBlurred} />
                 </div>
                 <div 
