@@ -1,8 +1,8 @@
 <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1227 207" width="1227" height="207">
 	<title>logo</title>
 	<style>
-		.s0 { fill: #ffffff } 
-		.s1 { fill: #010101 } 
+		.s0 { fill:rgba(255, 255, 255, 0) } 
+		.s1 { fill:rgb(255, 255, 255) } 
 	</style>
 	<g id="Background">
 		<path id="Path 0" class="s0" d="m0 103.5v103.5h1227v-207h-1227z"/>

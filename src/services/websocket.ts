@@ -28,28 +28,21 @@ export class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectTimeout = 1000;
-  private wordMap: Map<string, number> = new Map();
   private isInitialLoad: boolean = true;
   private keepAliveInterval: NodeJS.Timeout | null = null;
   private isViewPage: boolean = false;
-  private messageHandlers: Map<string, ((data: any) => void)[]> = new Map();
+  private messageHandlers: ((event: MessageEvent) => void)[] = [];
 
   constructor(private url: string) {}
 
   addEventListener(type: string, handler: (event: MessageEvent) => void) {
-    if (!this.messageHandlers.has(type)) {
-      this.messageHandlers.set(type, []);
-    }
-    this.messageHandlers.get(type)?.push(handler);
+    this.messageHandlers.push(handler);
   }
 
   removeEventListener(type: string, handler: (event: MessageEvent) => void) {
-    const handlers = this.messageHandlers.get(type);
-    if (handlers) {
-      const index = handlers.indexOf(handler);
-      if (index !== -1) {
-        handlers.splice(index, 1);
-      }
+    const index = this.messageHandlers.indexOf(handler);
+    if (index !== -1) {
+      this.messageHandlers.splice(index, 1);
     }
   }
 
@@ -73,14 +66,6 @@ export class WebSocketService {
     }, 30000); // Send ping every 30 seconds
   }
 
-  private updateWordCloud() {
-    const words = Array.from(this.wordMap.entries()).map(([text, value]) => ({
-      text,
-      value
-    }));
-    useWordCloudStore.getState().setWords(words);
-  }
-
   private setupEventListeners(code: string) {
     if (!this.ws) return;
 
@@ -97,50 +82,9 @@ export class WebSocketService {
 
     this.ws.onmessage = (event) => {
       console.log('📥 [WebSocket v3] Received message:', event.data);
-      const data = JSON.parse(event.data);
       
       // Call registered message handlers
-      this.messageHandlers.get('message')?.forEach(handler => handler(event));
-      
-      switch (data.type) {
-        case 'update_cloud':
-          if (data.words) {
-            // Clear the word map and update with new words
-            this.wordMap.clear();
-            data.words.forEach((word: string) => {
-              const normalizedWord = word.toLowerCase();
-              this.wordMap.set(normalizedWord, (this.wordMap.get(normalizedWord) || 0) + 1);
-            });
-            this.updateWordCloud();
-            
-            // Handle blur state based on page type and newWord field
-            if (data.newWord) {
-              if (this.isViewPage) {
-                // On view page, unblur for 3 seconds when new word arrives
-                useWordCloudStore.getState().setBlurred(false);
-                setTimeout(() => {
-                  useWordCloudStore.getState().setBlurred(true);
-                }, 3000);
-              } else {
-                // On artwork page, unblur and stay unblurred when new word arrives
-                useWordCloudStore.getState().setBlurred(false);
-              }
-            } else if (!this.isInitialLoad) {
-              // For non-new-word updates, only unblur if not initial load
-              useWordCloudStore.getState().setBlurred(false);
-              if (this.isViewPage) {
-                setTimeout(() => {
-                  useWordCloudStore.getState().setBlurred(true);
-                }, 3000);
-              }
-            }
-          }
-          break;
-
-        case 'error':
-          useWordCloudStore.getState().setError(data.message);
-          break;
-      }
+      this.messageHandlers.forEach(handler => handler(event));
     };
 
     this.ws.onclose = (event) => {
@@ -180,7 +124,6 @@ export class WebSocketService {
     if (this.ws) {
       this.ws.close();
       this.ws = null;
-      this.wordMap.clear();
     }
   }
 
