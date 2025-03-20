@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useWordCloudStore, wsService } from '@/services/websocket';
 import { Header } from '@/components/Header';
@@ -47,6 +47,7 @@ export default function GalleryPage() {
   const [artworks, setArtworks] = useState<Artworks>({});
   const [error, setError] = useState<string | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
+  const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
   // Load font and fetch initial data
   useEffect(() => {
@@ -114,6 +115,12 @@ export default function GalleryPage() {
             if (data.artworkCode && data.words) {
               console.log('📊 [GalleryPage] Processing word update for code:', data.artworkCode);
               
+              // Clear any existing timeout for this artwork
+              if (timeoutsRef.current[data.artworkCode]) {
+                clearTimeout(timeoutsRef.current[data.artworkCode]);
+                delete timeoutsRef.current[data.artworkCode];
+              }
+              
               // Convert words array to Word array
               const wordMap = new Map<string, number>();
               data.words.forEach(word => {
@@ -138,7 +145,7 @@ export default function GalleryPage() {
               }));
               
               // After 3 seconds, blur word cloud and show QR code again
-              setTimeout(() => {
+              timeoutsRef.current[data.artworkCode] = setTimeout(() => {
                 setArtworks(prev => ({
                   ...prev,
                   [data.artworkCode]: {
@@ -188,6 +195,9 @@ export default function GalleryPage() {
       console.log('🔵 [GalleryPage] Cleaning up');
       wsService.removeEventListener('message', handleMessage);
       wsService.disconnect();
+      
+      // Clear all timeouts on unmount
+      Object.values(timeoutsRef.current).forEach(timeout => clearTimeout(timeout));
     };
   }, []);
 
