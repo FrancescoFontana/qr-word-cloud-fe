@@ -9,7 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Titillium Web', 'sans-serif'],
       },
       animation: {
         'gradient': 'gradient 8s linear infinite',

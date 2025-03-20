@@ -93,8 +93,8 @@ export default function GalleryPage() {
         
         switch (data.type) {
           case 'update_cloud':
-            if (data.words && data.code) {
-              console.log('📊 [GalleryPage] Processing word update for code:', data.code);
+            if (data.words && data.artworkCode) {
+              console.log('📊 [GalleryPage] Processing word update for code:', data.artworkCode);
               // Convert string array to Word array
               const wordMap = new Map<string, number>();
               data.words.forEach((word: string) => {
@@ -107,11 +107,11 @@ export default function GalleryPage() {
                 value
               }));
               
-              console.log('✨ [GalleryPage] Setting new words for code:', data.code);
+              console.log('✨ [GalleryPage] Setting new words for code:', data.artworkCode);
               setArtworks(prev => ({
                 ...prev,
-                [data.code]: {
-                  ...prev[data.code],
+                [data.artworkCode]: {
+                  ...prev[data.artworkCode],
                   words: wordArray,
                   isBlurred: false,
                   showQR: false
@@ -122,8 +122,8 @@ export default function GalleryPage() {
               setTimeout(() => {
                 setArtworks(prev => ({
                   ...prev,
-                  [data.code]: {
-                    ...prev[data.code],
+                  [data.artworkCode]: {
+                    ...prev[data.artworkCode],
                     isBlurred: true,
                     showQR: true
                   }
