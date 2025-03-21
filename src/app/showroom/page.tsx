@@ -246,7 +246,13 @@ export default function ShowroomPage() {
             {Object.entries(artworks).map(([code, artwork]) => (
               <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
                 <div className="absolute inset-0">
-                  <svg className="w-full h-full">
+                  <svg 
+                    className="w-full h-full" 
+                    width="100%" 
+                    height="100%" 
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="xMidYMid meet"
+                  >
                     <WordMap words={artwork.words} isBlurred={artwork.isBlurred} />
                   </svg>
                 </div>
