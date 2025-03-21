@@ -254,7 +254,7 @@ export default function GalleryPage() {
                   }`}
                 >
                   <div className="w-full h-full flex items-center justify-center">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-12">
                       <QRCodeSVG
                         value={`${window.location.origin}/artwork/${code}`}
                         size={Math.min(window.innerWidth * 0.12, 180)}
