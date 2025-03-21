@@ -8,13 +8,11 @@ export function Footer() {
       <div className="flex items-center gap-2 text-white/60 text-sm">
         <span>Powered by</span>
         <Image
-          src="/grid_logo.png"
+          src="/grid_logo.svg"
           alt="Grid Logo"
           width={20}
           height={20}
           className="h-5 w-auto"
-          priority
-          unoptimized
         />
         <span>The Grid Company</span>
       </div>

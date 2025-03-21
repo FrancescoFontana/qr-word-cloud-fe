@@ -14,7 +14,7 @@ export function Header() {
             height={200}
             className="mb-4"
           />
-          <h1 className="text-3xl font-light text-white text-center mb-4">
+          <h1 className="text-3xl font-light text-white text-center">
             Unveiling Lights
           </h1>
         </div>
