@@ -84,10 +84,13 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
 
     const draw = (words: Array<cloud.Word & { color: string }>, svg: d3.Selection<SVGSVGElement, unknown, null, undefined>, centerX: number, centerY: number) => {
       console.log('🎨 [WordMap] Drawing words:', words.length);
+      console.log('🎨 [WordMap] SVG dimensions:', { width: svg.attr('width'), height: svg.attr('height') });
+      console.log('🎨 [WordMap] Center point:', { centerX, centerY });
       
       // Create a group for the words
       const wordGroup = svg.append('g')
         .attr('transform', `translate(${centerX},${centerY})`);
+      console.log('🎨 [WordMap] Created word group with transform:', `translate(${centerX},${centerY})`);
 
       // Add words with transitions
       const wordElements = wordGroup.selectAll<SVGTextElement, cloud.Word & { color: string }>('text')
@@ -105,11 +108,28 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
         .style('filter', isBlurred ? 'blur(8px)' : 'none')
         .style('transition', 'filter 0.5s ease-in-out');
 
+      // Log each word's properties
+      wordElements.each(function(d) {
+        console.log('🎨 [WordMap] Word properties:', {
+          text: d.text,
+          size: d.size,
+          color: d.color,
+          x: d.x,
+          y: d.y,
+          rotate: d.rotate,
+          opacity: d3.select(this).style('opacity'),
+          filter: d3.select(this).style('filter')
+        });
+      });
+
       // Animate words in
       wordElements
         .transition()
         .duration(500)
-        .style('opacity', 1);
+        .style('opacity', 1)
+        .on('end', () => {
+          console.log('🎨 [WordMap] Words animation completed');
+        });
 
       // Handle new words
       const newWords = words.filter(word => 
@@ -183,21 +203,33 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
         .domain([0, maxValue])
         .range([20, 60]); // Adjusted range for better visibility
 
+      console.log('📊 [WordMap] Font size scale:', { maxValue, domain: [0, maxValue], range: [20, 60] });
+
       // Create word cloud layout
+      const layoutWords = words.map(d => ({
+        text: d.text,
+        size: fontSizeScale(d.value),
+        color: colors[Math.floor(Math.random() * colors.length)]
+      }));
+      console.log('🎨 [WordMap] Layout words:', layoutWords);
+
       const layout = cloud()
         .size([width, height])
-        .words(words.map(d => ({
-          text: d.text,
-          size: fontSizeScale(d.value),
-          color: colors[Math.floor(Math.random() * colors.length)]
-        })))
+        .words(layoutWords)
         .padding(10)
         .rotate(0)
         .font('Titillium Web')
         .fontSize(function(d) { return (d as LayoutWord).size; })
         .on('end', (cloudWords: Array<cloud.Word & { color: string }>) => {
           try {
-            console.log('🎨 [WordMap] Cloud words:', cloudWords);
+            console.log('🎨 [WordMap] Cloud words after layout:', cloudWords.map(w => ({
+              text: w.text,
+              size: w.size,
+              color: w.color,
+              x: w.x,
+              y: w.y,
+              rotate: w.rotate
+            })));
             draw(cloudWords, svg, centerX, centerY);
           } catch (err) {
             console.error('❌ [WordMap] Draw error:', err);
