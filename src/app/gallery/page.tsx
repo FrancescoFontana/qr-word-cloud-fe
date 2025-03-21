@@ -238,7 +238,7 @@ export default function GalleryPage() {
     <div className="min-h-screen bg-black text-white">
       <Header />
       <main className="flex-1 flex flex-col items-center justify-center py-16 pt-48">
-        <div className="text-3xl font-light italic mb-12 text-center">
+        <div className="text-4xl font-bold italic mb-12 text-center">
           Leave a word in the Cloud
         </div>
         <div className="w-full px-4">
@@ -267,7 +267,7 @@ export default function GalleryPage() {
               </div>
             ))}
           </div>
-          <p className="text-white/60 text-center mt-8 text-lg">
+          <p className="text-white/60 text-center mt-8 text-xl">
             Inquadra il QR code con il tuo telefono per aggiungere le tue parole nel CloudWall
           </p>
         </div>
