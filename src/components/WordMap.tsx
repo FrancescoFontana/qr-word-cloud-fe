@@ -1,9 +1,11 @@
 'use client';
   
 import { useEffect, useRef } from 'react';
-import * as d3 from 'd3';
+import { select } from 'd3-selection';
 import { scaleLinear } from 'd3-scale';
 import { max } from 'd3-array';
+import cloud from 'd3-cloud';
+import { transition } from 'd3-transition';
 import { Word } from '@/types/word';
   
 interface WordMapProps {
@@ -11,7 +13,7 @@ interface WordMapProps {
   isBlurred?: boolean;
 }
   
-interface CloudWord extends d3.layout.cloud.Word {
+interface CloudWord extends cloud.Word {
   color: string;
   size: number;
 }
@@ -44,7 +46,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
     if (!svgRef.current || words.length === 0) return;
   
     // Clear previous content
-    d3.select(svgRef.current).selectAll('*').remove();
+    select(svgRef.current).selectAll('*').remove();
   
     const width = svgRef.current.clientWidth;
     const height = svgRef.current.clientHeight;
@@ -52,7 +54,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
     const centerY = height / 2;
   
     // Create SVG
-    const svg = d3.select(svgRef.current)
+    const svg = select(svgRef.current)
       .attr('width', width)
       .attr('height', height);
   
@@ -63,7 +65,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
       .range([14, Math.min(width, height) * 0.8]); // Scale to container size
   
     // Create word cloud layout
-    const layout = d3.layout.cloud<LayoutWord>()
+    const layout = cloud()
       .size([width, height])
       .words(words.map(d => ({
         text: d.text,
@@ -73,7 +75,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
       .padding(5)
       .rotate(0)
       .font('Titillium Web')
-      .fontSize((d: { size: number }) => d.size)
+      .fontSize(function(d) { return (d as LayoutWord).size; })
       .on('end', draw);
   
     layout.start();
@@ -116,7 +118,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
           .transition()
           .duration(500)
           .style('opacity', 0)
-          .each('end', () => {
+          .on('end', () => {
             // Fade in new word at maximum size
             const newWordElement = wordElements.filter(d => 
               newWords.some(newWord => newWord.text === d.text)
@@ -125,13 +127,13 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
               .transition()
               .duration(500)
               .style('opacity', 1)
-              .each('end', () => {
+              .on('end', () => {
                 // Fade out new word
                 newWordElement
                   .transition()
                   .duration(500)
                   .style('opacity', 0)
-                  .each('end', () => {
+                  .on('end', () => {
                     // Fade in all words
                     wordElements
                       .transition()
