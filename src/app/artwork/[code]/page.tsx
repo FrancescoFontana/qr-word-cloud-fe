@@ -151,11 +151,13 @@ export default function ArtworkPage() {
           <div className="relative w-full h-full">
             <WordCloud words={words} isBlurred={isBlurred} />
             <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${showInput ? 'opacity-100' : 'opacity-0'}`}>
-              <div className="w-full max-w-md px-4">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8">
-                  <h1 className="text-xl font-light italic mb-6 text-left">
-                    Lascia una parola o un concetto
-                  </h1>
+              <div className="w-full max-w-2xl px-4">
+                <div className="bg-black/50 backdrop-blur-sm rounded-lg p-8">
+                  <div className="mb-8">
+                    <h2 className="text-xl font-light italic text-white text-left">
+                      Lascia una parola o un concetto
+                    </h2>
+                  </div>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                       <input

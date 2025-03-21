@@ -6,6 +6,7 @@ import { useWordCloudStore, wsService } from '@/services/websocket';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { QRCodeSVG } from 'qrcode.react';
+import Image from 'next/image';
 
 const WordCloud = dynamic(() => import('@/components/WordCloud').then(mod => ({ default: mod.WordCloud })), {
   ssr: false,
@@ -239,7 +240,7 @@ export default function GalleryPage() {
       <Header />
       <main className="flex-1 flex flex-col items-center justify-center py-16">
         <div className="text-3xl font-light italic mb-12 text-center">
-          "Send a word in the Cloud"
+          Leave a word in the Cloud
         </div>
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
@@ -265,6 +266,9 @@ export default function GalleryPage() {
               </div>
             ))}
           </div>
+          <p className="text-white/60 text-center mt-8 text-lg">
+            Inquadra il QR code con il tuo telefono per aggiungere le tue parole nel CloudWall
+          </p>
         </div>
       </main>
       <Footer />
