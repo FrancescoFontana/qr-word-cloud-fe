@@ -10,8 +10,8 @@ export function Header() {
           <Image
             src="/logo.svg"
             alt="Logo"
-            width={100}
-            height={100}
+            width={200}
+            height={200}
             className="mb-2"
           />
           <h1 className="text-3xl font-light text-white text-center">
