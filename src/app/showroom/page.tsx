@@ -73,7 +73,6 @@ export default function ShowroomPage() {
         // Convert string arrays to Word arrays and initialize artwork states
         const newArtworks: Artworks = {};
         Object.entries(data).forEach(([code, words]) => {
-          console.log(`Processing words for code ${code}:`, words);
           const wordMap = new Map<string, number>();
           words.forEach(word => {
             const normalizedWord = word.toLowerCase();
@@ -84,7 +83,6 @@ export default function ShowroomPage() {
             text,
             value
           }));
-          console.log(`Converted words for code ${code}:`, wordArray);
 
           newArtworks[code] = {
             words: wordArray,
@@ -93,7 +91,6 @@ export default function ShowroomPage() {
           };
         });
 
-        console.log('Setting artworks state:', newArtworks);
         setArtworks(newArtworks);
 
         // Connect to WebSocket for each artwork code that isn't already connected
@@ -122,7 +119,6 @@ export default function ShowroomPage() {
           case 'update_cloud':
             if (data.artworkCode && data.words) {
               console.log('📊 [ShowroomPage] Processing word update for code:', data.artworkCode);
-              console.log('Received words:', data.words);
 
               // Skip if an update is already in progress for this artwork
               if (updateInProgressRef.current[data.artworkCode]) {
@@ -151,22 +147,17 @@ export default function ShowroomPage() {
                 text,
                 value
               }));
-              console.log('Converted words for update:', wordArray);
 
               // First, update the words and hide QR code
-              setArtworks(prev => {
-                const updated = {
-                  ...prev,
-                  [data.artworkCode]: {
-                    ...prev[data.artworkCode],
-                    words: wordArray,
-                    isBlurred: false,
-                    showQR: false
-                  }
-                };
-                console.log('Updated artworks state:', updated);
-                return updated;
-              });
+              setArtworks(prev => ({
+                ...prev,
+                [data.artworkCode]: {
+                  ...prev[data.artworkCode],
+                  words: wordArray,
+                  isBlurred: false,
+                  showQR: false
+                }
+              }));
 
               // After 3 seconds, blur word cloud and show QR code again
               timeoutsRef.current[data.artworkCode] = setTimeout(() => {
@@ -235,9 +226,6 @@ export default function ShowroomPage() {
     };
   }, []);
 
-  // Add debug log for render
-  console.log('Rendering ShowroomPage with artworks:', artworks);
-
   if (!fontLoaded) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -255,35 +243,24 @@ export default function ShowroomPage() {
         </div>
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-            {Object.entries(artworks).map(([code, artwork]) => {
-              console.log(`Rendering artwork ${code} with words:`, artwork.words);
-              return (
-                <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
-                  <div className="absolute inset-0">
-                    <svg 
-                      className="w-full h-full" 
-                      width="100%" 
-                      height="100%" 
-                      viewBox="0 0 100 100"
-                      preserveAspectRatio="xMidYMid meet"
-                    >
-                      <WordMap words={artwork.words} isBlurred={artwork.isBlurred} />
-                    </svg>
-                  </div>
-                  {artwork.showQR && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                      <QRCodeSVG
-                        value={`https://unveilinglights.it/artwork/${code}`}
-                        size={200}
-                        level="H"
-                        includeMargin={true}
-                        className="bg-white p-4 rounded-lg"
-                      />
-                    </div>
-                  )}
+            {Object.entries(artworks).map(([code, artwork]) => (
+              <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
+                <div className="absolute inset-0">
+                  <WordMap words={artwork.words} isBlurred={artwork.isBlurred} />
                 </div>
-              );
-            })}
+                {artwork.showQR && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                    <QRCodeSVG
+                      value={`https://unveilinglights.it/artwork/${code}`}
+                      size={200}
+                      level="H"
+                      includeMargin={true}
+                      className="bg-white p-4 rounded-lg"
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </main>

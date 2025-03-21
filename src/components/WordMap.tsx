@@ -270,12 +270,12 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-full bg-gray-100 rounded-lg p-4 flex items-center justify-center"
+      className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center"
       style={{ 
-        width: '300px',
-        height: '300px',
-        minWidth: '300px',
-        minHeight: '300px'
+        width: '100%',
+        height: '100%',
+        minWidth: '100%',
+        minHeight: '100%'
       }}
     >
       <svg
