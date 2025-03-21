@@ -269,19 +269,23 @@ export default function ShowroomPage() {
                   <WordMap words={artwork.words} isBlurred={!isViewMode && artwork.isBlurred} />
                 </div>
                 {!isViewMode && artwork.showQR && (
-                  <div className="w-full h-full flex flex-col items-center justify-center">
-                    <div className="text-2xl font-medium text-white mb-8 text-center px-4">
-                      {artwork.name}
+                  <>
+                    <div className="absolute top-4 left-0 right-0 z-10">
+                      <h3 className="text-2xl font-medium text-white text-center px-4">
+                        {artwork.name}
+                      </h3>
                     </div>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-24">
-                      <QRCodeSVG
-                        value={`${window.location.origin}/artwork/${code}`}
-                        size={Math.min(window.innerWidth * 0.22, 280)}
-                        fgColor="white"
-                        bgColor="transparent"
-                      />
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-24">
+                        <QRCodeSVG
+                          value={`${window.location.origin}/artwork/${code}`}
+                          size={Math.min(window.innerWidth * 0.22, 280)}
+                          fgColor="white"
+                          bgColor="transparent"
+                        />
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
                 {isViewMode && (
                   <div className="absolute top-0 left-0 right-0 z-10 bg-black/50 backdrop-blur-sm py-2">
