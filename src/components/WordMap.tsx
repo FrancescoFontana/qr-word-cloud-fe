@@ -196,14 +196,20 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
         .font('Titillium Web')
         .fontSize(function(d) { return (d as LayoutWord).size; })
         .on('end', (cloudWords: Array<cloud.Word & { color: string }>) => {
-          draw(cloudWords, svg, centerX, centerY);
-        })
-        .on('error', (err: Error) => {
-          console.error('❌ [WordMap] Layout error:', err);
-          setError('Failed to layout words');
+          try {
+            draw(cloudWords, svg, centerX, centerY);
+          } catch (err) {
+            console.error('❌ [WordMap] Draw error:', err);
+            setError('Failed to draw word cloud');
+          }
         });
 
-      layout.start();
+      try {
+        layout.start();
+      } catch (err) {
+        console.error('❌ [WordMap] Layout error:', err);
+        setError('Failed to layout words');
+      }
     } catch (err) {
       console.error('❌ [WordMap] Render error:', err);
       setError('Failed to render word cloud');
