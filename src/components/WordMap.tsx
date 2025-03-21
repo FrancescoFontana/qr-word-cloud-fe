@@ -1,33 +1,28 @@
 'use client';
   
 import { useEffect, useRef } from 'react';
-import { select, Selection } from 'd3-selection';
-import { scaleLinear } from 'd3-scale';
-import { max } from 'd3-array';
+import * as d3 from 'd3';
 import cloud from 'd3-cloud';
-import { transition } from 'd3-transition';
 import { Word } from '@/types/word';
-import type { BaseType } from 'd3-selection';
-import 'd3-transition';  // This is needed to extend Selection with transition
-  
+
 interface WordMapProps {
   words: Word[];
   isBlurred?: boolean;
 }
-  
+
 interface CloudWord extends cloud.Word {
   color: string;
   size: number;
 }
-  
+
 interface LayoutWord {
   text: string;
   size: number;
   color: string;
 }
-  
-type D3Selection = Selection<SVGTextElement, CloudWord, SVGGElement, unknown>;
-  
+
+type D3Selection = d3.Selection<SVGTextElement, CloudWord, SVGGElement, unknown>;
+
 export function WordMap({ words, isBlurred = false }: WordMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const previousWordsRef = useRef<Word[]>([]);
@@ -50,7 +45,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
     if (!svgRef.current || words.length === 0) return;
   
     // Clear previous content
-    select(svgRef.current).selectAll('*').remove();
+    d3.select(svgRef.current).selectAll('*').remove();
   
     const width = svgRef.current.clientWidth;
     const height = svgRef.current.clientHeight;
@@ -58,13 +53,13 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
     const centerY = height / 2;
   
     // Create SVG
-    const svg = select(svgRef.current)
+    const svg = d3.select(svgRef.current)
       .attr('width', width)
       .attr('height', height);
   
     // Create scales
-    const maxValue = max(words, (d: Word) => d.value) ?? 0;
-    const fontSizeScale = scaleLinear<number, number>()
+    const maxValue = d3.max(words, (d: Word) => d.value) ?? 0;
+    const fontSizeScale = d3.scaleLinear<number, number>()
       .domain([0, maxValue])
       .range([14, Math.min(width, height) * 0.8]); // Scale to container size
   
@@ -106,8 +101,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
         .style('transition', 'filter 0.5s ease-in-out');
   
       // Animate words in
-      select(wordGroup.node())
-        .selectAll('text')
+      wordElements
         .transition()
         .duration(500)
         .style('opacity', 1);
@@ -119,16 +113,14 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
   
       if (newWords.length > 0) {
         // Fade out all words
-        select(wordGroup.node())
-          .selectAll('text')
+        wordElements
           .transition()
           .duration(500)
           .style('opacity', 0)
           .on('end', () => {
             // Fade in new word at maximum size
-            const newWordElement = select(wordGroup.node())
-              .selectAll('text')
-              .filter(d => newWords.some(newWord => newWord.text === (d as CloudWord).text));
+            const newWordElement = wordElements
+              .filter(d => newWords.some(newWord => newWord.text === d.text));
   
             newWordElement
               .transition()
@@ -142,8 +134,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
                   .style('opacity', 0)
                   .on('end', () => {
                     // Fade in all words
-                    select(wordGroup.node())
-                      .selectAll('text')
+                    wordElements
                       .transition()
                       .duration(500)
                       .style('opacity', 1);
