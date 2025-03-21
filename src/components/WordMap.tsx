@@ -108,9 +108,9 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
         .style('filter', isBlurred ? 'blur(8px)' : 'none')
         .style('transition', 'opacity 0.5s ease-in-out, filter 0.5s ease-in-out');
 
-      // Log each word's properties
+      // Log each word's properties before animation
       wordElements.each(function(d) {
-        console.log('🎨 [WordMap] Word properties:', {
+        console.log('🎨 [WordMap] Word properties before animation:', {
           text: d.text,
           size: d.size,
           color: d.color,
@@ -122,13 +122,14 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
         });
       });
 
-      // Animate words in immediately
+      // Animate words in immediately with explicit opacity setting
       wordElements
         .transition()
         .duration(500)
         .style('opacity', 1)
-        .on('end', () => {
-          console.log('🎨 [WordMap] Words animation completed');
+        .on('end', function() {
+          console.log('🎨 [WordMap] Word animation completed for:', d3.select(this).text());
+          console.log('🎨 [WordMap] Final opacity:', d3.select(this).style('opacity'));
         });
 
       // Handle new words
@@ -152,7 +153,9 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
               .transition()
               .duration(500)
               .style('opacity', 1)
-              .on('end', () => {
+              .on('end', function() {
+                console.log('🎨 [WordMap] New word animation completed for:', d3.select(this).text());
+                console.log('🎨 [WordMap] New word final opacity:', d3.select(this).style('opacity'));
                 // Fade out new word
                 newWordElement
                   .transition()
@@ -163,7 +166,11 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
                     wordElements
                       .transition()
                       .duration(500)
-                      .style('opacity', 1);
+                      .style('opacity', 1)
+                      .on('end', function() {
+                        console.log('🎨 [WordMap] Final animation completed for:', d3.select(this).text());
+                        console.log('🎨 [WordMap] Final opacity:', d3.select(this).style('opacity'));
+                      });
                   });
               });
           });
