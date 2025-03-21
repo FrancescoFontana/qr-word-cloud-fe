@@ -253,16 +253,14 @@ export default function GalleryPage() {
                     artwork.showQR ? 'opacity-100' : 'opacity-0 pointer-events-none'
                   }`}
                 >
-                  <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8">
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="bg-transparent p-10 rounded-lg">
-                          <QRCodeSVG
-                            value={`${window.location.origin}/artwork/${code}`}
-                            size={Math.min(window.innerWidth * 0.18, 280)}
-                            fgColor="white"
-                            bgColor="transparent"
-                          />
-                      </div>
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8">
+                      <QRCodeSVG
+                        value={`${window.location.origin}/artwork/${code}`}
+                        size={Math.min(window.innerWidth * 0.12, 180)}
+                        fgColor="white"
+                        bgColor="transparent"
+                      />
                     </div>
                   </div>
                 </div>
