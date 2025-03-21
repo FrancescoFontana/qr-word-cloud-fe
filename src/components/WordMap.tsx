@@ -27,7 +27,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const previousWordsRef = useRef<Word[]>([]);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [dimensions, setDimensions] = useState({ width: 300, height: 300 });
   const [error, setError] = useState<string | null>(null);
   
   // Light color palette
@@ -48,14 +48,22 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
   useEffect(() => {
     if (!containerRef.current) return;
     
-    const resizeObserver = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        const container = entry.target as HTMLElement;
-        const width = container.offsetWidth;
-        const height = container.offsetHeight;
-        console.log('📐 [WordMap] Container dimensions:', { width, height });
-        setDimensions({ width, height });
-      }
+    const updateDimensions = () => {
+      const container = containerRef.current;
+      if (!container) return;
+      
+      const width = container.clientWidth || 300;
+      const height = container.clientHeight || 300;
+      console.log('📐 [WordMap] Container dimensions:', { width, height });
+      setDimensions({ width, height });
+    };
+
+    // Initial dimensions
+    updateDimensions();
+
+    // Create ResizeObserver
+    const resizeObserver = new ResizeObserver(() => {
+      updateDimensions();
     });
     
     resizeObserver.observe(containerRef.current);
@@ -69,7 +77,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
     console.log('🔵 [WordMap] Previous words:', previousWordsRef.current);
     console.log('🔵 [WordMap] Current dimensions:', dimensions);
 
-    if (!svgRef.current || words.length === 0 || dimensions.width === 0 || dimensions.height === 0) {
+    if (!svgRef.current || words.length === 0) {
       console.log('⚠️ [WordMap] Missing required data, skipping render');
       return;
     }
@@ -228,9 +236,9 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
           width: '100%',
           height: '100%'
         }}
-        width="300"
-        height="300"
-        viewBox="0 0 300 300"
+        width={dimensions.width}
+        height={dimensions.height}
+        viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
         preserveAspectRatio="xMidYMid meet"
       />
     </div>
