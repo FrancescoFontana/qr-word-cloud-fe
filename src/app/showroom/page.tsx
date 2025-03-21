@@ -263,7 +263,10 @@ export default function ShowroomPage() {
         </div>
         <div className="w-full px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-            {Object.entries(artworks).map(([code, artwork]) => (
+            {Object.entries(artworks).map(([code, artwork]) => {
+              if(code==='art01') artwork.name = 'I fiori saranno più belli domani'
+              if(code === 'art03') artwork.name = 'Parassita in volo'
+              return (
               <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
                 <div className="absolute inset-0">
                   <WordMap words={artwork.words} isBlurred={!isViewMode && artwork.isBlurred} />
@@ -272,7 +275,7 @@ export default function ShowroomPage() {
                   <>
                     <div className="absolute top-4 left-0 right-0 z-10">
                       <h3 className="text-2xl font-medium text-white text-center px-4">
-                        {artwork.name}
+                        "{artwork.name}"
                       </h3>
                     </div>
                     <div className="w-full h-full flex items-center justify-center">
@@ -295,7 +298,7 @@ export default function ShowroomPage() {
                   </div>
                 )}
               </div>
-            ))}
+            )})}
           </div>
         </div>
       </main>
