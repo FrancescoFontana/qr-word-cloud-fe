@@ -50,9 +50,9 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
     
     const resizeObserver = new ResizeObserver(entries => {
       for (const entry of entries) {
-        const { width } = entry.contentRect;
-        // Maintain 1:1 aspect ratio
-        const height = width;
+        const container = entry.target as HTMLElement;
+        const width = container.offsetWidth;
+        const height = container.offsetHeight;
         console.log('📐 [WordMap] Container dimensions:', { width, height });
         setDimensions({ width, height });
       }
@@ -212,11 +212,12 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-full min-h-[200px] bg-gray-100 rounded-lg p-4 flex items-center justify-center"
+      className="w-full h-full bg-gray-100 rounded-lg p-4 flex items-center justify-center"
       style={{ 
-        aspectRatio: '1/1',
-        minWidth: '200px',
-        minHeight: '200px'
+        width: '300px',
+        height: '300px',
+        minWidth: '300px',
+        minHeight: '300px'
       }}
     >
       <svg
@@ -224,9 +225,13 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
         className="w-full h-full"
         style={{ 
           filter: isBlurred ? 'blur(8px)' : 'none',
-          minWidth: '100%',
-          minHeight: '100%'
+          width: '100%',
+          height: '100%'
         }}
+        width="300"
+        height="300"
+        viewBox="0 0 300 300"
+        preserveAspectRatio="xMidYMid meet"
       />
     </div>
   );
