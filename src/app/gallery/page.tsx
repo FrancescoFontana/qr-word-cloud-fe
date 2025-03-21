@@ -265,6 +265,9 @@ export default function GalleryPage() {
               </div>
             ))}
           </div>
+          <p className="text-white/60 text-center mt-8 text-lg">
+            Inquadra il QR code con il tuo telefono per aggiungere le tue parole nel CloudWall
+          </p>
         </div>
       </main>
       <Footer />
