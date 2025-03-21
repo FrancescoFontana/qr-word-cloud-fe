@@ -1,12 +1,13 @@
 'use client';
   
 import { useEffect, useRef } from 'react';
-import { select } from 'd3-selection';
+import { select, Selection } from 'd3-selection';
 import { scaleLinear } from 'd3-scale';
 import { max } from 'd3-array';
 import cloud from 'd3-cloud';
-import { transition } from 'd3-transition';
+import 'd3-transition';
 import { Word } from '@/types/word';
+import type { BaseType } from 'd3-selection';
   
 interface WordMapProps {
   words: Word[];
@@ -23,6 +24,8 @@ interface LayoutWord {
   size: number;
   color: string;
 }
+  
+type D3Selection = Selection<SVGTextElement, CloudWord, SVGGElement, unknown>;
   
 export function WordMap({ words, isBlurred = false }: WordMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -86,7 +89,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
         .attr('transform', `translate(${centerX},${centerY})`);
   
       // Add words with transitions
-      const wordElements = wordGroup.selectAll('text')
+      const wordElements = wordGroup.selectAll<SVGTextElement, CloudWord>('text')
         .data(words)
         .enter()
         .append('text')
@@ -102,7 +105,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
         .style('transition', 'filter 0.5s ease-in-out');
   
       // Animate words in
-      wordElements
+      (wordElements as D3Selection)
         .transition()
         .duration(500)
         .style('opacity', 1);
@@ -114,7 +117,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
   
       if (newWords.length > 0) {
         // Fade out all words
-        wordElements
+        (wordElements as D3Selection)
           .transition()
           .duration(500)
           .style('opacity', 0)
@@ -123,19 +126,19 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
             const newWordElement = wordElements.filter(d => 
               newWords.some(newWord => newWord.text === d.text)
             );
-            newWordElement
+            (newWordElement as D3Selection)
               .transition()
               .duration(500)
               .style('opacity', 1)
               .on('end', () => {
                 // Fade out new word
-                newWordElement
+                (newWordElement as D3Selection)
                   .transition()
                   .duration(500)
                   .style('opacity', 0)
                   .on('end', () => {
                     // Fade in all words
-                    wordElements
+                    (wordElements as D3Selection)
                       .transition()
                       .duration(500)
                       .style('opacity', 1);
