@@ -245,10 +245,10 @@ export default function ShowroomPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
             {Object.entries(artworks).map(([code, artwork]) => (
               <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
-                <div className="absolute inset-0 w-full h-full">
-                  <div className="w-full h-full">
+                <div className="absolute inset-0">
+                  <svg className="w-full h-full">
                     <WordMap words={artwork.words} isBlurred={artwork.isBlurred} />
-                  </div>
+                  </svg>
                 </div>
                 {artwork.showQR && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50">
