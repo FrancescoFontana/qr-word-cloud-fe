@@ -33,7 +33,10 @@ interface Artworks {
 }
 
 interface ApiResponse {
-  [code: string]: string[];
+  [code: string]: {
+    name: string;
+    words: string[];
+  };
 }
 
 interface WebSocketMessage {
@@ -74,9 +77,9 @@ export default function ShowroomPage() {
 
         // Convert string arrays to Word arrays and initialize artwork states
         const newArtworks: Artworks = {};
-        Object.entries(data).forEach(([code, words]) => {
+        Object.entries(data).forEach(([code, artwork]) => {
           const wordMap = new Map<string, number>();
-          words.forEach(word => {
+          artwork.words.forEach(word => {
             const normalizedWord = word.toLowerCase();
             wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
           });
@@ -90,7 +93,7 @@ export default function ShowroomPage() {
             words: wordArray,
             isBlurred: true,
             showQR: true,
-            name: code
+            name: artwork.name
           };
         });
 
