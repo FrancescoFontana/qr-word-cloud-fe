@@ -195,15 +195,10 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
         .rotate(0)
         .font('Titillium Web')
         .fontSize(function(d) { return (d as LayoutWord).size; })
-        .on('end', (cloudWords) => {
-          // Ensure the words have the color property
-          const typedWords = cloudWords.map(word => ({
-            ...word,
-            color: (word as any).color || colors[Math.floor(Math.random() * colors.length)]
-          }));
-          draw(typedWords, svg, centerX, centerY);
+        .on('end', (cloudWords: Array<cloud.Word & { color: string }>) => {
+          draw(cloudWords, svg, centerX, centerY);
         })
-        .on('error', (err) => {
+        .on('error', (err: Error) => {
           console.error('❌ [WordMap] Layout error:', err);
           setError('Failed to layout words');
         });
