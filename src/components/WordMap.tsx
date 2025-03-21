@@ -8,6 +8,7 @@ import { Word } from '@/types/word';
 interface WordMapProps {
   words: Word[];
   isBlurred?: boolean;
+  onWordClick?: (word: Word) => void;
 }
 
 interface CloudWord extends cloud.Word {
@@ -23,7 +24,7 @@ interface LayoutWord {
 
 type D3Selection = d3.Selection<SVGTextElement, CloudWord, SVGGElement, unknown>;
 
-export function WordMap({ words, isBlurred = false }: WordMapProps) {
+export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const previousWordsRef = useRef<Word[]>([]);
@@ -47,13 +48,15 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
   // Track container dimensions
   useEffect(() => {
     if (!containerRef.current) return;
-    
+
     const updateDimensions = () => {
       const container = containerRef.current;
       if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const width = Math.max(rect.width, 300);
+      const height = Math.max(rect.height, 300);
       
-      const width = container.clientWidth || 300;
-      const height = container.clientHeight || 300;
       console.log('📐 [WordMap] Container dimensions:', { width, height });
       setDimensions({ width, height });
     };
@@ -62,10 +65,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
     updateDimensions();
 
     // Create ResizeObserver
-    const resizeObserver = new ResizeObserver(() => {
-      updateDimensions();
-    });
-    
+    const resizeObserver = new ResizeObserver(updateDimensions);
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
   }, []);
@@ -148,6 +148,15 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
               });
           });
       }
+
+      // Handle word click
+      wordElements
+        .on('click', (event, d) => {
+          const word = words.find(w => w.text === d.text);
+          if (word && onWordClick) {
+            onWordClick(word as unknown as Word);
+          }
+        });
     };
 
     try {
@@ -207,7 +216,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
 
     // Store current words for next update
     previousWordsRef.current = words;
-  }, [words, isBlurred, dimensions]);
+  }, [words, isBlurred, dimensions, onWordClick]);
 
   if (error) {
     return (
@@ -230,16 +239,16 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
     >
       <svg
         ref={svgRef}
-        className="w-full h-full"
-        style={{ 
-          filter: isBlurred ? 'blur(8px)' : 'none',
-          width: '100%',
-          height: '100%'
-        }}
         width={dimensions.width}
         height={dimensions.height}
         viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
         preserveAspectRatio="xMidYMid meet"
+        style={{ 
+          width: '100%',
+          height: '100%',
+          filter: isBlurred ? 'blur(8px)' : 'none',
+          transition: 'filter 0.5s ease-in-out'
+        }}
       />
     </div>
   );
