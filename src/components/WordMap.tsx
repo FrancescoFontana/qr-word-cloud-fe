@@ -181,7 +181,7 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
       const maxValue = d3.max(words, (d: Word) => d.value) ?? 0;
       const fontSizeScale = d3.scaleLinear<number, number>()
         .domain([0, maxValue])
-        .range([14, Math.min(width, height) * 0.8]);
+        .range([20, 60]); // Adjusted range for better visibility
 
       // Create word cloud layout
       const layout = cloud()
@@ -191,12 +191,13 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
           size: fontSizeScale(d.value),
           color: colors[Math.floor(Math.random() * colors.length)]
         })))
-        .padding(5)
+        .padding(10)
         .rotate(0)
         .font('Titillium Web')
         .fontSize(function(d) { return (d as LayoutWord).size; })
         .on('end', (cloudWords: Array<cloud.Word & { color: string }>) => {
           try {
+            console.log('🎨 [WordMap] Cloud words:', cloudWords);
             draw(cloudWords, svg, centerX, centerY);
           } catch (err) {
             console.error('❌ [WordMap] Draw error:', err);
