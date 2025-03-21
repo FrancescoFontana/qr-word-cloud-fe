@@ -139,40 +139,45 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
 
       if (newWords.length > 0) {
         console.log('✨ [WordMap] New words detected:', newWords.length);
-        // Fade out all words
+        
+        // First, animate new words in at maximum size
+        const newWordElements = wordElements
+          .filter(d => newWords.some(newWord => newWord.text === d.text));
+
+        newWordElements
+          .transition()
+          .duration(500)
+          .style('opacity', 1)
+          .style('font-size', d => `${(d.size || 20) * 1.5}px`)
+          .on('end', function() {
+            console.log('🎨 [WordMap] New word initial animation completed for:', d3.select(this).text());
+            // After initial animation, fade out new words
+            newWordElements
+              .transition()
+              .duration(500)
+              .style('opacity', 0)
+              .style('font-size', d => `${d.size || 20}px`)
+              .on('end', () => {
+                // Finally, fade in all words
+                wordElements
+                  .transition()
+                  .duration(500)
+                  .style('opacity', 1)
+                  .on('end', function() {
+                    console.log('🎨 [WordMap] Final animation completed for:', d3.select(this).text());
+                    console.log('🎨 [WordMap] Final opacity:', d3.select(this).style('opacity'));
+                  });
+              });
+          });
+      } else {
+        // If no new words, just animate all words in
         wordElements
           .transition()
           .duration(500)
-          .style('opacity', 0)
-          .on('end', () => {
-            // Fade in new word at maximum size
-            const newWordElement = wordElements
-              .filter(d => newWords.some(newWord => newWord.text === d.text));
-
-            newWordElement
-              .transition()
-              .duration(500)
-              .style('opacity', 1)
-              .on('end', function() {
-                console.log('🎨 [WordMap] New word animation completed for:', d3.select(this).text());
-                console.log('🎨 [WordMap] New word final opacity:', d3.select(this).style('opacity'));
-                // Fade out new word
-                newWordElement
-                  .transition()
-                  .duration(500)
-                  .style('opacity', 0)
-                  .on('end', () => {
-                    // Fade in all words
-                    wordElements
-                      .transition()
-                      .duration(500)
-                      .style('opacity', 1)
-                      .on('end', function() {
-                        console.log('🎨 [WordMap] Final animation completed for:', d3.select(this).text());
-                        console.log('🎨 [WordMap] Final opacity:', d3.select(this).style('opacity'));
-                      });
-                  });
-              });
+          .style('opacity', 1)
+          .on('end', function() {
+            console.log('🎨 [WordMap] Animation completed for:', d3.select(this).text());
+            console.log('🎨 [WordMap] Final opacity:', d3.select(this).style('opacity'));
           });
       }
 
