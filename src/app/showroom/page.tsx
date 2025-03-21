@@ -293,7 +293,7 @@ export default function ShowroomPage() {
                 {isViewMode && (
                   <div className="absolute top-0 left-0 right-0 z-10 bg-black/50 backdrop-blur-sm py-2">
                     <h3 className="text-3xl font-medium text-white text-center px-4">
-                      {artwork.name}
+                      "{artwork.name}"
                     </h3>
                   </div>
                 )}
