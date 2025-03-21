@@ -106,7 +106,7 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
         .text(d => d.text || '')
         .style('opacity', 0)
         .style('filter', isBlurred ? 'blur(8px)' : 'none')
-        .style('transition', 'filter 0.5s ease-in-out');
+        .style('transition', 'opacity 0.5s ease-in-out, filter 0.5s ease-in-out');
 
       // Log each word's properties
       wordElements.each(function(d) {
@@ -122,7 +122,7 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
         });
       });
 
-      // Animate words in
+      // Animate words in immediately
       wordElements
         .transition()
         .duration(500)
