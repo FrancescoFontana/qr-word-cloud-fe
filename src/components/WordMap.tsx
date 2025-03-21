@@ -8,6 +8,7 @@ import cloud from 'd3-cloud';
 import { transition } from 'd3-transition';
 import { Word } from '@/types/word';
 import type { BaseType } from 'd3-selection';
+import 'd3-transition';  // This is needed to extend Selection with transition
   
 interface WordMapProps {
   words: Word[];
@@ -105,7 +106,8 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
         .style('transition', 'filter 0.5s ease-in-out');
   
       // Animate words in
-      (wordElements as D3Selection)
+      select(wordGroup.node())
+        .selectAll('text')
         .transition()
         .duration(500)
         .style('opacity', 1);
@@ -117,28 +119,31 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
   
       if (newWords.length > 0) {
         // Fade out all words
-        (wordElements as D3Selection)
+        select(wordGroup.node())
+          .selectAll('text')
           .transition()
           .duration(500)
           .style('opacity', 0)
           .on('end', () => {
             // Fade in new word at maximum size
-            const newWordElement = wordElements.filter(d => 
-              newWords.some(newWord => newWord.text === d.text)
-            );
-            (newWordElement as D3Selection)
+            const newWordElement = select(wordGroup.node())
+              .selectAll('text')
+              .filter(d => newWords.some(newWord => newWord.text === (d as CloudWord).text));
+  
+            newWordElement
               .transition()
               .duration(500)
               .style('opacity', 1)
               .on('end', () => {
                 // Fade out new word
-                (newWordElement as D3Selection)
+                newWordElement
                   .transition()
                   .duration(500)
                   .style('opacity', 0)
                   .on('end', () => {
                     // Fade in all words
-                    (wordElements as D3Selection)
+                    select(wordGroup.node())
+                      .selectAll('text')
                       .transition()
                       .duration(500)
                       .style('opacity', 1);
