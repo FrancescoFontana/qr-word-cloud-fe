@@ -78,7 +78,7 @@ export default function GalleryPage() {
             const normalizedWord = word.toLowerCase();
             wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
           });
-          
+
           const wordArray: Word[] = Array.from(wordMap.entries()).map(([text, value]) => ({
             text,
             value
@@ -114,40 +114,40 @@ export default function GalleryPage() {
       try {
         console.log('📥 [GalleryPage] Received WebSocket message:', event.data);
         const data: WebSocketMessage = JSON.parse(event.data);
-        
+
         switch (data.type) {
           case 'update_cloud':
             if (data.artworkCode && data.words) {
               console.log('📊 [GalleryPage] Processing word update for code:', data.artworkCode);
-              
+
               // Skip if an update is already in progress for this artwork
               if (updateInProgressRef.current[data.artworkCode]) {
                 console.log('⏭️ [GalleryPage] Skipping update - already in progress for code:', data.artworkCode);
                 return;
               }
-              
+
               // Mark this artwork as having an update in progress
               updateInProgressRef.current[data.artworkCode] = true;
-              
+
               // Clear any existing timeout for this artwork
               if (timeoutsRef.current[data.artworkCode]) {
                 console.log('🧹 [GalleryPage] Clearing existing timeout for code:', data.artworkCode);
                 clearTimeout(timeoutsRef.current[data.artworkCode]);
                 delete timeoutsRef.current[data.artworkCode];
               }
-              
+
               // Convert words array to Word array
               const wordMap = new Map<string, number>();
               data.words.forEach(word => {
                 const normalizedWord = word.toLowerCase();
                 wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
               });
-              
+
               const wordArray: Word[] = Array.from(wordMap.entries()).map(([text, value]) => ({
                 text,
                 value
               }));
-              
+
               // First, update the words and hide QR code
               setArtworks(prev => ({
                 ...prev,
@@ -158,7 +158,7 @@ export default function GalleryPage() {
                   showQR: false
                 }
               }));
-              
+
               // After 3 seconds, blur word cloud and show QR code again
               timeoutsRef.current[data.artworkCode] = setTimeout(() => {
                 console.log('⏰ [GalleryPage] Timeout triggered for code:', data.artworkCode);
@@ -217,10 +217,10 @@ export default function GalleryPage() {
       console.log('🔵 [GalleryPage] Cleaning up');
       wsService.removeEventListener('message', handleMessage);
       wsService.disconnect();
-      
+
       // Clear all timeouts on unmount
       Object.values(timeoutsRef.current).forEach(timeout => clearTimeout(timeout));
-      
+
       // Clear connected codes set
       connectedCodesRef.current.clear();
     };
@@ -248,18 +248,20 @@ export default function GalleryPage() {
                 <div className="absolute inset-0">
                   <WordCloud words={artwork.words} isBlurred={artwork.isBlurred} />
                 </div>
-                <div 
+                <div
                   className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${
                     artwork.showQR ? 'opacity-100' : 'opacity-0 pointer-events-none'
                   }`}
                 >
                   <div className="w-full h-full flex items-center justify-center">
-                    <QRCodeSVG 
-                      value={`${window.location.origin}/artwork/${code}`}
-                      size={Math.min(window.innerWidth * 0.20, 300)}
-                      fgColor="white"
-                      bgColor="transparent"
-                    />
+                    <div className="bg-transparent p-10 rounded-lg">
+                        <QRCodeSVG
+                          value={`${window.location.origin}/artwork/${code}`}
+                          size={Math.min(window.innerWidth * 0.18, 280)}
+                          fgColor="white"
+                          bgColor="transparent"
+                        />
+                    </div>
                   </div>
                 </div>
               </div>
