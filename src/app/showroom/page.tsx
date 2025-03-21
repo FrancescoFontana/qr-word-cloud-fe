@@ -51,10 +51,23 @@ export default function ShowroomPage() {
   const [artworks, setArtworks] = useState<Artworks>({});
   const [error, setError] = useState<string | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
+  const [isViewMode, setIsViewMode] = useState(false);
   const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const updateInProgressRef = useRef<{ [key: string]: boolean }>({});
   const connectedCodesRef = useRef<Set<string>>(new Set());
-  const [isViewMode, setIsViewMode] = useState(false);
+
+  // Handle keyboard events
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'v') {
+        console.log('🔍 [ShowroomPage] View mode activated');
+        setIsViewMode(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
 
   // Load font and fetch initial data
   useEffect(() => {
@@ -252,18 +265,14 @@ export default function ShowroomPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
             {Object.entries(artworks).map(([code, artwork]) => (
               <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
-                {isViewMode && (
-                  <div className="absolute top-0 left-0 right-0 z-10 bg-black/50 backdrop-blur-sm py-2">
-                    <h3 className="text-3xl font-medium text-white text-center px-4">
-                      {artwork.name}
-                    </h3>
-                  </div>
-                )}
                 <div className="absolute inset-0">
                   <WordMap words={artwork.words} isBlurred={!isViewMode && artwork.isBlurred} />
                 </div>
                 {!isViewMode && artwork.showQR && (
-                  <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-full h-full flex flex-col items-center justify-center">
+                    <div className="text-2xl font-medium text-white mb-8 text-center px-4">
+                      {artwork.name}
+                    </div>
                     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-24">
                       <QRCodeSVG
                         value={`${window.location.origin}/artwork/${code}`}
@@ -274,12 +283,19 @@ export default function ShowroomPage() {
                     </div>
                   </div>
                 )}
+                {isViewMode && (
+                  <div className="absolute top-0 left-0 right-0 z-10 bg-black/50 backdrop-blur-sm py-2">
+                    <h3 className="text-3xl font-medium text-white text-center px-4">
+                      {artwork.name}
+                    </h3>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
       </main>
-      <Footer/>
+      <Footer />
     </div>
   );
 } 
