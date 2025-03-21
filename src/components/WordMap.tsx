@@ -1,6 +1,6 @@
 'use client';
   
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import cloud from 'd3-cloud';
 import { Word } from '@/types/word';
@@ -31,6 +31,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
   
   const svgRef = useRef<SVGSVGElement>(null);
   const previousWordsRef = useRef<Word[]>([]);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   
   // Light color palette
   const colors = [
@@ -46,13 +47,33 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
     '#FFCCE5', // Light rose
   ];
   
+  // Handle resize
+  useEffect(() => {
+    if (!svgRef.current) return;
+  
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        console.log('📐 [WordMap] Resize detected:', { width, height });
+        setDimensions({ width, height });
+      }
+    });
+  
+    resizeObserver.observe(svgRef.current);
+  
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+  
   useEffect(() => {
     console.log('🔵 [WordMap] useEffect triggered');
     console.log('🔵 [WordMap] Current words:', words);
     console.log('🔵 [WordMap] Previous words:', previousWordsRef.current);
+    console.log('🔵 [WordMap] Current dimensions:', dimensions);
   
-    if (!svgRef.current || words.length === 0) {
-      console.log('⚠️ [WordMap] No SVG ref or empty words, skipping render');
+    if (!svgRef.current || words.length === 0 || dimensions.width === 0 || dimensions.height === 0) {
+      console.log('⚠️ [WordMap] Missing required data, skipping render');
       return;
     }
   
@@ -60,17 +81,15 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
     console.log('🧹 [WordMap] Clearing previous content');
     d3.select(svgRef.current).selectAll('*').remove();
   
-    const width = svgRef.current.clientWidth;
-    const height = svgRef.current.clientHeight;
-    const centerX = width / 2;
-    const centerY = height / 2;
+    const centerX = dimensions.width / 2;
+    const centerY = dimensions.height / 2;
   
-    console.log('📐 [WordMap] Dimensions:', { width, height, centerX, centerY });
+    console.log('📐 [WordMap] Using dimensions:', { width: dimensions.width, height: dimensions.height, centerX, centerY });
   
     // Create SVG
     const svg = d3.select(svgRef.current)
-      .attr('width', width)
-      .attr('height', height);
+      .attr('width', dimensions.width)
+      .attr('height', dimensions.height);
   
     // Create scales
     const maxValue = d3.max(words, (d: Word) => d.value) ?? 0;
@@ -78,16 +97,16 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
   
     const fontSizeScale = d3.scaleLinear<number, number>()
       .domain([0, maxValue])
-      .range([14, Math.min(width, height) * 0.8]); // Scale to container size
+      .range([14, Math.min(dimensions.width, dimensions.height) * 0.8]); // Scale to container size
   
     console.log('📏 [WordMap] Font size scale:', {
       domain: [0, maxValue],
-      range: [14, Math.min(width, height) * 0.8]
+      range: [14, Math.min(dimensions.width, dimensions.height) * 0.8]
     });
   
     // Create word cloud layout
     const layout = cloud()
-      .size([width, height])
+      .size([dimensions.width, dimensions.height])
       .words(words.map(d => ({
         text: d.text,
         size: fontSizeScale(d.value),
@@ -179,7 +198,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
     return () => {
       console.log('🧹 [WordMap] Cleaning up');
     };
-  }, [words, isBlurred]);
+  }, [words, isBlurred, dimensions]);
   
   return (
     <svg
