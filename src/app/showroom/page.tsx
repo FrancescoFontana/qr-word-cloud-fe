@@ -21,18 +21,22 @@ interface Word {
   value: number;
 }
 
+interface ApiResponse {
+  [code: string]: {
+    name: string;
+    words: string[];
+  };
+}
+
 interface ArtworkData {
+  name: string;
   words: Word[];
   isBlurred: boolean;
   showQR: boolean;
 }
 
 interface Artworks {
-  [key: string]: ArtworkData;
-}
-
-interface ApiResponse {
-  [code: string]: string[];
+  [code: string]: ArtworkData;
 }
 
 interface WebSocketMessage {
@@ -72,9 +76,9 @@ export default function ShowroomPage() {
 
         // Convert string arrays to Word arrays and initialize artwork states
         const newArtworks: Artworks = {};
-        Object.entries(data).forEach(([code, words]) => {
+        Object.entries(data).forEach(([code, artwork]) => {
           const wordMap = new Map<string, number>();
-          words.forEach(word => {
+          artwork.words.forEach(word => {
             const normalizedWord = word.toLowerCase();
             wordMap.set(normalizedWord, (wordMap.get(normalizedWord) || 0) + 1);
           });
@@ -85,6 +89,7 @@ export default function ShowroomPage() {
           }));
 
           newArtworks[code] = {
+            name: artwork.name,
             words: wordArray,
             isBlurred: true,
             showQR: true
@@ -183,6 +188,7 @@ export default function ShowroomPage() {
               setArtworks(prev => ({
                 ...prev,
                 [data.artworkCode]: {
+                  name: '', // We'll get the name from the next update
                   words: [],
                   isBlurred: true,
                   showQR: true
