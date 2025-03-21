@@ -270,7 +270,7 @@ export function WordMap({ words, isBlurred = false, onWordClick }: WordMapProps)
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center"
+      className="w-full h-full flex items-center justify-center"
       style={{ 
         width: '100%',
         height: '100%',

@@ -241,30 +241,31 @@ export default function ShowroomPage() {
         <div className="text-3xl font-light italic mb-12 text-center">
           Leave a word in the Cloud
         </div>
-        <div className="container mx-auto px-4">
+        <div className="w-full px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
             {Object.entries(artworks).map(([code, artwork]) => (
-              <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
+                <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
                 <div className="absolute inset-0">
                   <WordMap words={artwork.words} isBlurred={artwork.isBlurred} />
                 </div>
                 {artwork.showQR && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                    <QRCodeSVG
-                      value={`https://unveilinglights.it/artwork/${code}`}
-                      size={200}
-                      level="H"
-                      includeMargin={true}
-                      className="bg-white p-4 rounded-lg"
-                    />
-                  </div>
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-24">
+                        <QRCodeSVG
+                            value={`${window.location.origin}/artwork/${code}`}
+                            size={Math.min(window.innerWidth * 0.22, 280)}
+                            fgColor="white"
+                            bgColor="transparent"
+                        />
+                      </div>
+                    </div>
                 )}
               </div>
             ))}
           </div>
         </div>
       </main>
-      <Footer />
+      <Footer/>
     </div>
   );
 } 
