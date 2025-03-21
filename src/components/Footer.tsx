@@ -13,6 +13,8 @@ export function Footer() {
           width={20}
           height={20}
           className="h-5 w-auto"
+          priority
+          unoptimized
         />
         <span>The Grid Company</span>
       </div>
