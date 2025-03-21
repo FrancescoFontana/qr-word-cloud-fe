@@ -5,7 +5,7 @@ import { select, Selection } from 'd3-selection';
 import { scaleLinear } from 'd3-scale';
 import { max } from 'd3-array';
 import cloud from 'd3-cloud';
-import 'd3-transition';
+import { transition } from 'd3-transition';
 import { Word } from '@/types/word';
 import type { BaseType } from 'd3-selection';
   
