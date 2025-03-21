@@ -51,9 +51,23 @@ export default function ShowroomPage() {
   const [artworks, setArtworks] = useState<Artworks>({});
   const [error, setError] = useState<string | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
+  const [isViewMode, setIsViewMode] = useState(false);
   const timeoutsRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const updateInProgressRef = useRef<{ [key: string]: boolean }>({});
   const connectedCodesRef = useRef<Set<string>>(new Set());
+
+  // Handle keyboard events
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'v') {
+        console.log('🔍 [ShowroomPage] View mode activated');
+        setIsViewMode(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
 
   // Load font and fetch initial data
   useEffect(() => {
@@ -250,28 +264,35 @@ export default function ShowroomPage() {
         <div className="w-full px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
             {Object.entries(artworks).map(([code, artwork]) => (
-                <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
+              <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
                 <div className="absolute inset-0">
-                  <WordMap words={artwork.words} isBlurred={artwork.isBlurred} />
+                  <WordMap words={artwork.words} isBlurred={!isViewMode && artwork.isBlurred} />
                 </div>
-                {artwork.showQR && (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-24">
-                        <QRCodeSVG
-                            value={`${window.location.origin}/artwork/${code}`}
-                            size={Math.min(window.innerWidth * 0.22, 280)}
-                            fgColor="white"
-                            bgColor="transparent"
-                        />
-                      </div>
+                {!isViewMode && artwork.showQR && (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-24">
+                      <QRCodeSVG
+                        value={`${window.location.origin}/artwork/${code}`}
+                        size={Math.min(window.innerWidth * 0.22, 280)}
+                        fgColor="white"
+                        bgColor="transparent"
+                      />
                     </div>
+                  </div>
+                )}
+                {isViewMode && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                    <h3 className="text-2xl font-light text-white text-center px-4">
+                      {artwork.name}
+                    </h3>
+                  </div>
                 )}
               </div>
             ))}
           </div>
         </div>
       </main>
-      <Footer/>
+      <Footer />
     </div>
   );
 } 
