@@ -241,7 +241,7 @@ export default function GalleryPage() {
         <div className="text-3xl font-light italic mb-12 text-center">
           Leave a word in the Cloud
         </div>
-        <div className="container mx-auto px-4">
+        <div className="w-full px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
             {Object.entries(artworks).map(([code, artwork]) => (
               <div key={code} className="relative w-full aspect-square bg-black/30 rounded-2xl overflow-hidden">
@@ -257,7 +257,7 @@ export default function GalleryPage() {
                     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-12">
                       <QRCodeSVG
                         value={`${window.location.origin}/artwork/${code}`}
-                        size={Math.min(window.innerWidth * 0.12, 180)}
+                        size={Math.min(window.innerWidth * 0.22, 324)}
                         fgColor="white"
                         bgColor="transparent"
                       />
