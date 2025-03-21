@@ -13,6 +13,13 @@ interface WordMapProps {
   
 interface CloudWord extends d3.layout.cloud.Word {
   color: string;
+  size: number;
+}
+  
+interface LayoutWord {
+  text: string;
+  size: number;
+  color: string;
 }
   
 export function WordMap({ words, isBlurred = false }: WordMapProps) {
@@ -50,13 +57,13 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
       .attr('height', height);
   
     // Create scales
-    const maxValue = max(words, (d: Word, i: number) => Number(d.value) || 0) || 0;
+    const maxValue = max(words, (d: Word) => d.value) ?? 0;
     const fontSizeScale = scaleLinear<number, number>()
       .domain([0, maxValue])
       .range([14, Math.min(width, height) * 0.8]); // Scale to container size
   
     // Create word cloud layout
-    const layout = d3.layout.cloud()
+    const layout = d3.layout.cloud<LayoutWord>()
       .size([width, height])
       .words(words.map(d => ({
         text: d.text,
@@ -66,7 +73,7 @@ export function WordMap({ words, isBlurred = false }: WordMapProps) {
       .padding(5)
       .rotate(0)
       .font('Titillium Web')
-      .fontSize(d => d.size)
+      .fontSize((d: { size: number }) => d.size)
       .on('end', draw);
   
     layout.start();
