@@ -237,7 +237,7 @@ export default function GalleryPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      <main className="flex-1 flex flex-col items-center justify-center py-16 pt-32">
+      <main className="flex-1 flex flex-col items-center justify-center py-16 pt-48">
         <div className="text-3xl font-light italic mb-12 text-center">
           Leave a word in the Cloud
         </div>

@@ -146,7 +146,7 @@ export default function ArtworkPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      <main className="pt-32 pb-20">
+      <main className="pt-48 pb-20">
         <div className="fixed inset-0 flex items-center justify-center">
           <div className="relative w-full h-full">
             <WordCloud words={words} isBlurred={isBlurred} />
